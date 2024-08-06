@@ -10,6 +10,7 @@
 #include <zos_sys.h>
 #include <zos_vfs.h>
 #include <zos_keyboard.h>
+#include <zos_video.h>
 #include <zos_time.h>
 #include <zvb_gfx.h>
 #include "snake.h"
@@ -19,7 +20,7 @@
 static void init_game(void);
 static void wait(void);
 static void draw(void);
-static void input(void);
+static uint8_t input(void);
 static uint8_t update(void);
 static uint8_t check_collision(void);
 static void place_fruit(Point* point);
@@ -57,8 +58,10 @@ int main(void) {
 
     print_string("SCORE:", WIDTH - 10, HEIGHT);
 
+    uint8_t state = 0;
     while (1) {
-        input();
+        state = input();
+        if(state != 0) break;
         if (update() || check_collision())
             break;
         draw();
@@ -79,8 +82,10 @@ int main(void) {
         read(DEV_STDIN, &key, &size);
     } while (size != 1);
 
-    return main();
-    // return 0;
+    if(state == 0) return main();
+    // TODO: do something about the non-zero state?
+    ioctl(DEV_STDOUT, CMD_RESET_SCREEN, NULL);
+    return 0;
 }
 
 static void end_game(void) {
@@ -312,6 +317,8 @@ static int8_t check_key(uint8_t key) {
             if (snake.direction != DIRECTION_LEFT)
                 return DIRECTION_RIGHT;
             break;
+        case KB_ESC:
+            return -2;
     }
 
     return -1;
@@ -319,7 +326,7 @@ static int8_t check_key(uint8_t key) {
 
 static uint8_t keys[32];
 
-static void input(void) {
+static uint8_t input(void) {
     uint16_t size = 32;
     const int8_t last_direction = snake.former_direction;
     int8_t chosen = -1;
@@ -335,9 +342,13 @@ static void input(void) {
             } else {
                 int8_t direction = check_key(keys[i]);
                 /* Prioritize direction change */
-                if (direction != -1 && direction != last_direction) {
+                if (direction >= 0 && direction != last_direction) {
                     chosen = direction;
                     break;
+                } else {
+                    if(direction == -2) {
+                        return 255;
+                    }
                 }
             }
         }
@@ -347,6 +358,8 @@ static void input(void) {
         snake.direction = chosen;
         snake.former_direction = chosen;
     }
+
+    return 0;
 }
 
 static uint8_t update(void) {
