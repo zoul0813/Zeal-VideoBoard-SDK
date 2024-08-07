@@ -16,7 +16,7 @@
 #include "controller.h"
 #include "snake.h"
 
-#define MINIMUM_WAIT  200
+#define MINIMUM_WAIT  60
 
 static void play(void);
 static void init_game(void);
@@ -27,6 +27,7 @@ static uint8_t update(void);
 static uint8_t check_collision(void);
 static void place_fruit(Point* point);
 static void end_game(void);
+static uint8_t quit_game(void);
 static uint8_t position_in_snake(uint8_t from, uint8_t x, uint8_t y);
 static void print_string(const char* str, uint8_t x, uint8_t y);
 static void nprint_string(const char* str, uint8_t len, uint8_t x, uint8_t y);
@@ -37,6 +38,7 @@ Snake snake;
 Point fruit;
 gfx_context vctx;
 int controller_mode;
+uint8_t frames;
 
 /**
  * @brief Palette for the graphics tiles including the snake, the apple and the background
@@ -56,7 +58,7 @@ const uint8_t letters_palette[] = {
   0x00, 0x00, 0x83, 0xa8, 0xcb, 0xf1, 0xc7, 0xfc, 0x52, 0xff, 0xff, 0xff
 };
 
-int main(int argc, char** argv) {
+uint8_t main(int argc, char** argv) {
     if (argc == 1){
         char* param = strtok(argv[0], " ");
         if (param && (strcmp(param, "-c") == 0)) {
@@ -73,12 +75,17 @@ static void play(void) {
 
     print_string("SCORE:", WIDTH - 10, HEIGHT);
 
+    uint8_t state = 0;
     while (1) {
         input();
-        if (update() || check_collision())
-            break;
-        draw();
-        msleep(MINIMUM_WAIT - snake.speed);
+        gfx_wait_vblank(&vctx);
+        frames++;
+        if(frames >= MINIMUM_WAIT - snake.speed) {
+            if(update() || check_collision())
+                break;
+            frames = 0;
+            draw();
+        }
     }
     end_game();
 
@@ -95,8 +102,12 @@ static void play(void) {
         read(DEV_STDIN, &key, &size);
     } while (size != 1);
 
-    // ioctl(DEV_STDOUT, CMD_RESET_SCREEN, NULL);
     play();
+}
+
+static uint8_t quit_game(void) {
+    ioctl(DEV_STDOUT, CMD_RESET_SCREEN, NULL);
+    return 0;
 }
 
 static void end_game(void) {
@@ -113,7 +124,6 @@ static void end_game(void) {
         }
     }
 }
-
 
 static void print_string(const char* str, uint8_t x, uint8_t y)
 {
@@ -226,6 +236,8 @@ static void init_game(void) {
     update_score();
     place_fruit(&fruit);
 
+    // initialize frame counter for FPS
+    frames = 0;
     gfx_enable_screen(1);
 }
 
@@ -349,7 +361,7 @@ static void input(void) {
             size = read_controller(keys);
             exit = 1;
         }
-        
+
         if (size == 0)
             break;
 
@@ -375,12 +387,12 @@ static void input(void) {
 
 static uint8_t update(void) {
     // Move snake
-    if (snake.just_ate) {
+    if (snake.just_ate > 2) {
         /* Out of screen */
         snake.deleted.x = 79;
         snake.just_ate = 0;
         snake.length++;
-        if (snake.speed < 100)
+        if (snake.speed < 20)
             snake.speed++;
         update_score();
     } else {
@@ -420,7 +432,7 @@ static uint8_t check_collision(void) {
     // Check if snake has eaten fruit
     if (snake.body[0].x == fruit.x && snake.body[0].y == fruit.y) {
         if (snake.length != 0xff)
-            snake.just_ate = 1;
+            snake.just_ate += 1;
         do {
             place_fruit(&fruit);
         } while (position_in_snake(0, fruit.x, fruit.y));
