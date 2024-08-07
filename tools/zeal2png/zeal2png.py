@@ -5,6 +5,15 @@ from PIL import Image
 import argparse
 from pathlib import Path
 
+
+parser = argparse.ArgumentParser("zeal2png")
+parser.add_argument("-t","--tileset", help="Zeal Tileset (ZTS)", required=True)
+parser.add_argument("-p", "--palette", help="Zeal Palette (ZTP)", required=True)
+parser.add_argument("-o", "--output", help="Output PNG Filename")
+parser.add_argument("-b", "--bpp", help="Bits Per Pixel")
+parser.add_argument("-c", "--compressed", help="Decompress RLE", action="store_true")
+parser.add_argument("-s", "--show", help="Open in Viewer", action="store_true")
+
 tiles = []
 tile_width = 16
 tile_height = 16
@@ -41,10 +50,10 @@ def getPalette(paletteFile):
     palette.append(b)
   return palette
 
-def convert(tilesetFile, paletteFile):
-  palette = getPalette(paletteFile)
+def convert(args):
+  palette = getPalette(args.palette)
 
-  f = open(tilesetFile, mode="rb")
+  f = open(args.tileset, mode="rb")
   tiles = []
   tile = f.read(tile_size)
   image_count = 0
@@ -87,19 +96,17 @@ def convert(tilesetFile, paletteFile):
   return spritesheet
 
 def main():
-  parser = argparse.ArgumentParser("zeal2png")
-  parser.add_argument("-t","--tileset", help="Zeal Tileset (ZTS)", required=True)
-  parser.add_argument("-p", "--palette", help="Zeal Palette (ZTP)", required=True)
-  parser.add_argument("-o", "--output", help="Output PNG Filename")
   args = parser.parse_args()
-
-  output = convert(args.tileset, args.palette)
+  print("args", args)
+  output = convert(args)
 
   outputFile = args.output
   if outputFile == None:
     outputFile = Path(args.tileset).with_suffix(".png")
   print("output", outputFile)
   output.save(outputFile, "PNG")
+  if(args.show):
+    output.show()
 
 if __name__ == "__main__":
   main()
