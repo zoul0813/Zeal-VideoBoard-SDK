@@ -27,7 +27,6 @@ static uint8_t update(void);
 static uint8_t check_collision(void);
 static void place_fruit(Point* point);
 static void end_game(void);
-static uint8_t quit_game(void);
 static uint8_t position_in_snake(uint8_t from, uint8_t x, uint8_t y);
 static void print_string(const char* str, uint8_t x, uint8_t y);
 static void nprint_string(const char* str, uint8_t len, uint8_t x, uint8_t y);
@@ -103,11 +102,6 @@ static void play(void) {
     } while (size != 1);
 
     play();
-}
-
-static uint8_t quit_game(void) {
-    ioctl(DEV_STDOUT, CMD_RESET_SCREEN, NULL);
-    return 0;
 }
 
 static void end_game(void) {
