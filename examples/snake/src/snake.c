@@ -85,6 +85,7 @@ static void play(void) {
             frames = 0;
             draw();
         }
+        gfx_wait_end_vblank(&vctx);
     }
     end_game();
 
