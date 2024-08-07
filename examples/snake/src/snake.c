@@ -37,7 +37,6 @@ Snake snake;
 Point fruit;
 gfx_context vctx;
 int controller_mode;
-uint8_t frames;
 
 /**
  * @brief Palette for the graphics tiles including the snake, the apple and the background
@@ -75,6 +74,8 @@ static void play(void) {
     print_string("SCORE:", WIDTH - 10, HEIGHT);
 
     uint8_t state = 0;
+    // initialize frame counter for FPS
+    uint8_t frames = 0;
     while (1) {
         input();
         gfx_wait_vblank(&vctx);
@@ -231,8 +232,6 @@ static void init_game(void) {
     update_score();
     place_fruit(&fruit);
 
-    // initialize frame counter for FPS
-    frames = 0;
     gfx_enable_screen(1);
 }
 
