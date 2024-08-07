@@ -66,35 +66,6 @@ uint16_t read_controller(uint8_t* keys)
     IO_PIO_DATA_A = 1 << IO_CLOCK;
     /* Now, the DATA lines contain the first button (B) state.
      * Pulse the clock 4 times to skip the next 3 buttons: Y, start, select */
-
-
-    // uint16_t bits = 0;
-    // uint8_t i = 0;
-    // // always do this once, first time is (B)
-    // while (i < 16) {
-    //     bits = bits << 1;
-    //     bits += GET_DATA();
-    //     i++;
-    //     if(i < 16) CLOCK_ONCE();
-    // };
-
-    // if(!(bits & CONTROLLER_UP)) {
-    //     *keys = KB_UP_ARROW;
-    //     return 1;
-    // }
-    // if(!(bits & CONTROLLER_DOWN)) {
-    //     *keys = KB_DOWN_ARROW;
-    //     return 1;
-    // }
-    // if(!(bits & CONTROLLER_LEFT)) {
-    //     *keys = KB_LEFT_ARROW;
-    //     return 1;
-    // }
-    // if(!(bits & CONTROLLER_RIGHT)) {
-    //     *keys = KB_RIGHT_ARROW;
-    //     return 1;
-    // }
-
     CLOCK_ONCE(); // Y
     CLOCK_ONCE(); // Select
     CLOCK_ONCE(); // Start
@@ -118,11 +89,6 @@ uint16_t read_controller(uint8_t* keys)
         *keys = KB_RIGHT_ARROW;
         return 1;
     }
-
-    // // discard the last 8 bits (A,X,L,R,-,-,-,-)
-    // for(uint8_t i = 0; i < 8; i++) {
-    //     CLOCK_ONCE();
-    // }
 
     return 0;
 }
