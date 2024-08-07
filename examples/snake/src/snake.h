@@ -60,7 +60,8 @@ typedef struct {
     uint8_t just_ate;
     /* BCD representation of the score */
     uint8_t score[2];
-    /* 0: slowest, 100: fastest */
+    /* 0: slowest, 20: fastest */
     uint8_t speed;
+    uint8_t apples_to_boost;
 } Snake;
 

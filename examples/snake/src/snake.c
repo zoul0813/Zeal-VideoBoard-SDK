@@ -17,6 +17,7 @@
 #include "snake.h"
 
 #define MINIMUM_WAIT  60
+#define BOOST_ON      8
 
 static void play(void);
 static void init_game(void);
@@ -71,13 +72,21 @@ uint8_t main(int argc, char** argv) {
 static void play(void) {
     init_game();
 
-    print_string("SCORE:", WIDTH - 10, HEIGHT);
+    print_string("SCR:000", WIDTH - 8, HEIGHT);
+    print_string("SP:", 1, HEIGHT);
+    char text[2];
+    sprintf(text,"%02d", snake.speed);
+    nprint_string(text, 2, 4, HEIGHT);
+    print_string("B:", 7, HEIGHT);
+    sprintf(text,"%02d", BOOST_ON);
+    nprint_string(text, 2, 9, HEIGHT);
 
     uint8_t state = 0;
     // initialize frame counter for FPS
     uint8_t frames = 0;
     while (1) {
         input();
+        /* Wait for v-blank */
         gfx_wait_vblank(&vctx);
         frames++;
         if(frames >= MINIMUM_WAIT - snake.speed) {
@@ -228,6 +237,7 @@ static void init_game(void) {
     snake.speed = 0;
     snake.score[0] = 0x99;
     snake.score[1] = 0x99;
+    snake.apples_to_boost = BOOST_ON;
 
     update_score();
     place_fruit(&fruit);
@@ -246,9 +256,6 @@ static uint8_t get_direction(uint8_t former_x, uint8_t former_y, uint8_t x, uint
 }
 
 static void draw(void) {
-    /* Wait for v-blank */
-    gfx_wait_vblank(&vctx);
-
     /* Remove deleted tile */
     const Point* p = &snake.deleted;
     gfx_tilemap_place(&vctx, TILE_TRANSPARENT, 1, p->x, p->y);
@@ -381,13 +388,23 @@ static void input(void) {
 
 static uint8_t update(void) {
     // Move snake
-    if (snake.just_ate > 2) {
+    if (snake.just_ate) {
         /* Out of screen */
         snake.deleted.x = 79;
         snake.just_ate = 0;
+        snake.apples_to_boost--;
         snake.length++;
-        if (snake.speed < 20)
-            snake.speed++;
+        char text[2];
+        if (snake.apples_to_boost == 0) {
+            snake.apples_to_boost = BOOST_ON;
+            if(snake.speed < 20) {
+                snake.speed++;
+                sprintf(text, "%02d", snake.speed);
+                nprint_string(text, 2, 4, HEIGHT);
+            }
+        }
+        sprintf(text, "%02d", snake.apples_to_boost);
+        nprint_string(text, 2, 9, HEIGHT);
         update_score();
     } else {
         snake.deleted = snake.body[snake.length - 1];
@@ -426,7 +443,7 @@ static uint8_t check_collision(void) {
     // Check if snake has eaten fruit
     if (snake.body[0].x == fruit.x && snake.body[0].y == fruit.y) {
         if (snake.length != 0xff)
-            snake.just_ate += 1;
+            snake.just_ate = 1;
         do {
             place_fruit(&fruit);
         } while (position_in_snake(0, fruit.x, fruit.y));
