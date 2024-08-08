@@ -15,13 +15,14 @@
 #include <zos_video.h>
 #include <zvb_gfx.h>
 #include "controller.h"
+#include "menu.h"
 #include "snake.h"
 
 #define MINIMUM_WAIT  60
 #define MAX_SPEED     20
-#define BOOST_ON      8
 
 static uint8_t play(void);
+static void init(void);
 static void init_game(void);
 static void wait(void);
 static void draw(void);
@@ -41,6 +42,7 @@ Snake snake;
 Point fruit;
 gfx_context vctx;
 int controller_mode;
+uint8_t boost_on = 8;
 
 /**
  * @brief Palette for the graphics tiles including the snake, the apple and the background
@@ -66,6 +68,17 @@ uint8_t main(int argc, char** argv) {
         if (param && (strcmp(param, "-c") == 0)) {
             controller_mode = 1;
             controller_init();
+        }
+    }
+    init();
+    draw_menu();
+    while(1) {
+        uint8_t state = process_menu();
+        if(state > 0) {
+            draw_menu();
+        }
+        if(state == 255) {
+            break;
         }
     }
     return play();
@@ -129,16 +142,6 @@ static void end_game(void) {
     }
 }
 
-static void print_string(const char* str, uint8_t x, uint8_t y)
-{
-    gfx_tilemap_load(&vctx, str, strlen(str), 1, x, y);
-}
-
-static void nprint_string(const char* str, uint8_t len, uint8_t x, uint8_t y)
-{
-    gfx_tilemap_load(&vctx, str, len, 1, x, y);
-}
-
 #define BACKGROUND_INDEX    16
 #define BACKGROUND_TILE     32
 
@@ -176,7 +179,7 @@ static void update_stat(void) {
     nprint_string(text, strlen(text), 12, HEIGHT);
 }
 
-static void init_game(void) {
+static void init(void) {
     /* Initialize the keyboard by setting it to raw and non-blocking */
     void* arg = (void*) (KB_READ_NON_BLOCK | KB_MODE_RAW);
     ioctl(DEV_STDIN, KB_CMD_SET_MODE, arg);
@@ -229,6 +232,16 @@ static void init_game(void) {
     /* Fill the layer0 with the background pattern */
     draw_background();
 
+    gfx_enable_screen(1);
+}
+
+static void init_game(void) {
+    /* Disable the screen to prevent artifacts from showing */
+    gfx_enable_screen(0);
+
+    uint8_t mode = get_menu_selection();
+    boost_on = 8 - (mode * 2);
+
     // Initialize snake
     snake.length = 2;
     snake.body[0].x = WIDTH / 2;
@@ -237,10 +250,11 @@ static void init_game(void) {
     snake.body[1].y = HEIGHT / 2;
     snake.direction = DIRECTION_RIGHT;
     snake.former_direction = DIRECTION_RIGHT;
-    snake.speed = 0;
+    snake.speed = 5 * mode;
     snake.score = 0;
-    snake.apples_to_boost = BOOST_ON;
+    snake.apples_to_boost = boost_on;
 
+    draw_background();
     place_fruit(&fruit);
 
     gfx_enable_screen(1);
@@ -405,7 +419,7 @@ static uint8_t update(void) {
         snake.length++;
         snake.score++;
         if (snake.apples_to_boost == 0) {
-            snake.apples_to_boost = BOOST_ON;
+            snake.apples_to_boost = boost_on;
             if(snake.speed < MAX_SPEED) {
                 snake.speed++;
             }

@@ -7,6 +7,7 @@
 #pragma once
 
 #include <stdint.h>
+#include <zvb_gfx.h>
 
 #define WIDTH 20
 /* Keep one line at the bottom for the score */
@@ -66,3 +67,8 @@ typedef struct {
     uint8_t apples_to_boost;
 } Snake;
 
+
+extern Snake snake;
+extern Point fruit;
+extern gfx_context vctx;
+extern int controller_mode;
