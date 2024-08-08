@@ -17,6 +17,7 @@
 #include "snake.h"
 
 #define MINIMUM_WAIT  60
+#define MAX_SPEED     20
 #define BOOST_ON      8
 
 static void play(void);
@@ -32,7 +33,7 @@ static uint8_t position_in_snake(uint8_t from, uint8_t x, uint8_t y);
 static void print_string(const char* str, uint8_t x, uint8_t y);
 static void nprint_string(const char* str, uint8_t len, uint8_t x, uint8_t y);
 static void increment_score(uint8_t* score, char* output);
-static void update_score(void);
+static void update_stat(void);
 
 Snake snake;
 Point fruit;
@@ -73,13 +74,7 @@ static void play(void) {
     init_game();
 
     print_string("SCR:000", WIDTH - 8, HEIGHT);
-    print_string("SP:", 1, HEIGHT);
-    char text[2];
-    sprintf(text,"%02d", snake.speed);
-    nprint_string(text, 2, 4, HEIGHT);
-    print_string("B:", 7, HEIGHT);
-    sprintf(text,"%02d", BOOST_ON);
-    nprint_string(text, 2, 9, HEIGHT);
+    update_stat();
 
     uint8_t state = 0;
     // initialize frame counter for FPS
@@ -167,10 +162,14 @@ static void draw_background(void) {
     gfx_tilemap_load(&vctx, layer1, WIDTH, 1, 0, HEIGHT);
 }
 
-static void update_score(void) {
-    char text[3];
-    increment_score(snake.score, text);
-    nprint_string(text, 3, WIDTH - 4, HEIGHT);
+static void update_stat(void) {
+    char text[7];
+    sprintf(text,"SP:%02d", snake.speed);
+    nprint_string(text, strlen(text), 1, HEIGHT);
+    sprintf(text,"B:%02d", snake.apples_to_boost);
+    nprint_string(text, strlen(text), 7, HEIGHT);
+    sprintf(text,"SCR:%03d", snake.score);
+    nprint_string(text, strlen(text), 12, HEIGHT);
 }
 
 static void init_game(void) {
@@ -235,11 +234,9 @@ static void init_game(void) {
     snake.direction = DIRECTION_RIGHT;
     snake.former_direction = DIRECTION_RIGHT;
     snake.speed = 0;
-    snake.score[0] = 0x99;
-    snake.score[1] = 0x99;
+    snake.score = 0;
     snake.apples_to_boost = BOOST_ON;
 
-    update_score();
     place_fruit(&fruit);
 
     gfx_enable_screen(1);
@@ -394,18 +391,14 @@ static uint8_t update(void) {
         snake.just_ate = 0;
         snake.apples_to_boost--;
         snake.length++;
-        char text[2];
+        snake.score++;
         if (snake.apples_to_boost == 0) {
             snake.apples_to_boost = BOOST_ON;
-            if(snake.speed < 20) {
+            if(snake.speed < MAX_SPEED) {
                 snake.speed++;
-                sprintf(text, "%02d", snake.speed);
-                nprint_string(text, 2, 4, HEIGHT);
             }
         }
-        sprintf(text, "%02d", snake.apples_to_boost);
-        nprint_string(text, 2, 9, HEIGHT);
-        update_score();
+        update_stat();
     } else {
         snake.deleted = snake.body[snake.length - 1];
     }

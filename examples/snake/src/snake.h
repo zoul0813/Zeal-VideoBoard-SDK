@@ -59,7 +59,8 @@ typedef struct {
     uint8_t former_direction;
     uint8_t just_ate;
     /* BCD representation of the score */
-    uint8_t score[2];
+    // uint8_t score[2];
+    uint16_t score;
     /* 0: slowest, 20: fastest */
     uint8_t speed;
     uint8_t apples_to_boost;
