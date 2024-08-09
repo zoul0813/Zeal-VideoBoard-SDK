@@ -22,6 +22,7 @@
 #define MAX_SPEED     20
 
 static uint8_t play(void);
+static uint8_t menu(void);
 static void init(void);
 static void init_game(void);
 static void wait(void);
@@ -31,7 +32,7 @@ static uint8_t update(void);
 static uint8_t check_collision(void);
 static void place_fruit(Point* point);
 static void end_game(void);
-static uint8_t quit_game(void);
+static void quit_game(void);
 static uint8_t position_in_snake(uint8_t from, uint8_t x, uint8_t y);
 static void print_string(const char* str, uint8_t x, uint8_t y);
 static void nprint_string(const char* str, uint8_t len, uint8_t x, uint8_t y);
@@ -71,6 +72,11 @@ uint8_t main(int argc, char** argv) {
         }
     }
     init();
+    menu();
+    return play();
+}
+
+static uint8_t menu(void) {
     draw_menu();
     while(1) {
         uint8_t state = process_menu();
@@ -78,10 +84,11 @@ uint8_t main(int argc, char** argv) {
             draw_menu();
         }
         if(state == 255) {
+            uint8_t mode = get_menu_selection();
+            if(mode == MENU_QUIT) return quit_game();
             break;
         }
     }
-    return play();
 }
 
 static uint8_t play(void) {
@@ -122,9 +129,9 @@ static uint8_t play(void) {
     return play();
 }
 
-static uint8_t quit_game(void) {
+static void quit_game(void) {
     ioctl(DEV_STDOUT, CMD_RESET_SCREEN, NULL);
-    return 0;
+    exit(0);
 }
 
 static void end_game(void) {

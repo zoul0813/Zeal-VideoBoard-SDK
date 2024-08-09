@@ -7,11 +7,6 @@
 #include "strings.h"
 #include "snake.h"
 
-#define MENU_MODE_EASY 0
-#define MENU_MODE_MEDIUM 1
-#define MENU_MODE_HARD 2
-#define MENU_QUIT 3
-
 uint8_t menu_current_selection = 0;
 static uint8_t keys[32];
 
@@ -84,17 +79,13 @@ void draw_menu(void)
 
   gfx_tilemap_place(&vctx, TILE_APPLE, 1, WIDTH / 2 - 5, menu_y);
 
-  // sprintf(text,"New ", snake.speed);
-  // nprint_string(text, strlen(text), 1, HEIGHT);
-  // sprintf(text,"B:%02d", snake.apples_to_boost);
-  // nprint_string(text, strlen(text), 7, HEIGHT);
-  // sprintf(text,"SCR:%03d", snake.score);
-  // nprint_string(text, strlen(text), 12, HEIGHT);
 
+#ifdef DEBUG
   char text[5];
   sprintf(text, "%05d", menu_current_selection);
   nprint_string(text, 5, WIDTH / 2 - 3, 12);
 
   sprintf(text, "%05d", menu_y);
   nprint_string(text, 5, WIDTH / 2 - 3, 13);
+#endif
 }
