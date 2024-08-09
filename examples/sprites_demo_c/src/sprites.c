@@ -55,20 +55,20 @@ static void init_game(void) {
     const size_t sprite_size = &_char_sprite_end - &_char_sprite_start;
     gfx_tileset_options options = {
         .compression = TILESET_COMP_NONE,
-        .from_byte = 0x4001
     };
     err = gfx_tileset_load(&vctx, &_char_sprite_start, sprite_size, &options);
     if (err) exit(1);
 
-    gfx_sprite_set_tile(&vctx, 0, 0);
-    gfx_sprite_set_tile(&vctx, 1, 1);
+    sprite.flags = SPRITE_NONE;
+    gfx_sprite_set_tile(&vctx, 0, 1);
+    gfx_sprite_set_tile(&vctx, 1, 2);
 
     gfx_enable_screen(1);
 }
 
 static void draw(void) {
     static uint16_t x = 16;
-    static uint16_t y = 0;
+    static uint16_t y = 16;
     static int8_t xd = 1;
     static int8_t yd = 1;
     /* Wait for v-blank */
@@ -78,30 +78,34 @@ static void draw(void) {
     x += xd;
     y += yd;
 
-    if(x > 320) {
+    if(x > 320) { // 320 - 16
         xd = -1;
     }
     if(x <= 16) {
         xd = 1;
     }
 
-    if(y > 288) { // 240 - (16 * 2)
+    if(y > 208) { // 240 - (16 * 2)
         yd = -1;
     }
     if(y <= 16) {
         yd = 1;
     }
 
-    gfx_sprite sprite = {
-        .x = x,
-        .y = y,
-        .tile = 0,
-        .flags = SPRITE_NONE,
-    };
-    gfx_sprite_render(&vctx, 0, &sprite);
-    sprite.y += 16;
+    sprite.x = x;
+    sprite.y = y;
     sprite.tile = 1;
+
+    if(xd < 0) {
+        sprite.flags = SPRITE_FLIP_X;
+    } else {
+        sprite.flags = SPRITE_NONE;
+    }
+
     gfx_sprite_render(&vctx, 0, &sprite);
+    sprite.y -= 16;
+    sprite.tile = 2;
+    gfx_sprite_render(&vctx, 1, &sprite);
 }
 
 static void update(void) {
