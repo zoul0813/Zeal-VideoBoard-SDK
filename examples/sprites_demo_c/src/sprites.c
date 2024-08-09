@@ -132,9 +132,9 @@ static void draw(void) {
     sprite.tile = 1;
 
     if(xd < 0) {
-        sprite.flags = SPRITE_FLIP_X;
-    } else {
         sprite.flags = SPRITE_NONE;
+    } else {
+        sprite.flags = SPRITE_FLIP_X;
     }
 
     gfx_sprite_render(&vctx, 0, &sprite);
