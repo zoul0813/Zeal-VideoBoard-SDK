@@ -14,8 +14,12 @@
 #include <zvb_gfx.h>
 #include "sprites.h"
 
+#define BACKGROUND_INDEX    16
+#define BACKGROUND_TILE     32
+
 static void init_game(void);
 static void draw(void);
+static void draw_background(void);
 static void update(void);
 
 gfx_context vctx;
@@ -34,6 +38,30 @@ int main(void) {
         }
     }
     // return 0; // unreachable
+}
+
+static void draw_background(void) {
+    uint8_t line[WIDTH + 1];
+    /* Tile 15 is a transparent tile, fill layer1 with it */
+    uint8_t layer1[WIDTH];
+
+    for (int i = 0; i < WIDTH; i++) {
+        layer1[i] = TILE_TRANSPARENT;
+        line[i] = BACKGROUND_TILE + (i&1);
+    }
+    line[WIDTH] = BACKGROUND_TILE;
+
+    for (uint8_t i = 0; i < HEIGHT; i++) {
+        gfx_tilemap_load(&vctx, line + (i & 1), WIDTH, 0, 0, i);
+        gfx_tilemap_load(&vctx, layer1, WIDTH, 1, 0, i);
+    }
+    /* Set the layer0 last line to dark green */
+    for (uint8_t i = 0; i < WIDTH; i++) {
+        line[i] = BACKGROUND_TILE + 2;
+    }
+    gfx_tilemap_load(&vctx, line, WIDTH, 0, 0, HEIGHT);
+    /* set the layer1 last line to transparent */
+    gfx_tilemap_load(&vctx, layer1, WIDTH, 1, 0, HEIGHT);
 }
 
 static void init_game(void) {
@@ -58,6 +86,13 @@ static void init_game(void) {
     };
     err = gfx_tileset_load(&vctx, &_char_sprite_start, sprite_size, &options);
     if (err) exit(1);
+
+    gfx_tileset_add_color_tile(&vctx, BACKGROUND_TILE, BACKGROUND_INDEX);
+    gfx_tileset_add_color_tile(&vctx, BACKGROUND_TILE + 1, BACKGROUND_INDEX + 1);
+    /* One black tile (color 1 is black) */
+    gfx_tileset_add_color_tile(&vctx, BACKGROUND_TILE + 2, BACKGROUND_INDEX + 2);
+
+    draw_background();
 
     sprite.flags = SPRITE_NONE;
     gfx_sprite_set_tile(&vctx, 0, 1);

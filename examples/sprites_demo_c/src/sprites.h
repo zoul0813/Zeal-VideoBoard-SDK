@@ -5,3 +5,8 @@
  */
 
 #pragma once
+
+#define WIDTH 20
+#define HEIGHT 15
+
+#define TILE_TRANSPARENT    15
