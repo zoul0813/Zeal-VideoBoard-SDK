@@ -85,10 +85,11 @@ static uint8_t menu(void) {
         }
         if(state == 255) {
             uint8_t mode = get_menu_selection();
-            if(mode == MENU_QUIT) return quit_game();
+            if(mode == MENU_QUIT) quit_game();
             break;
         }
     }
+    return 0;
 }
 
 static uint8_t play(void) {
@@ -100,7 +101,7 @@ static uint8_t play(void) {
     uint8_t frames = 0;
     while (1) {
         state = input();
-        if(state != 0) return quit_game();
+        if(state != 0) quit_game();
         gfx_wait_vblank(&vctx);
         frames++;
         if(frames >= MINIMUM_WAIT - snake.speed) {
@@ -177,13 +178,11 @@ static void draw_background(void) {
 }
 
 static void update_stat(void) {
-    char text[7];
-    sprintf(text,"SP:%02d", snake.speed);
+    char text[10];
+    sprintf(text,"%02d/%02d", snake.speed, snake.apples_to_boost);
     nprint_string(text, strlen(text), 1, HEIGHT);
-    sprintf(text,"B:%02d", snake.apples_to_boost);
-    nprint_string(text, strlen(text), 7, HEIGHT);
-    sprintf(text,"SCR:%03d", snake.score);
-    nprint_string(text, strlen(text), 12, HEIGHT);
+    sprintf(text,"SCORE:%03d", snake.score);
+    nprint_string(text, strlen(text), 10, HEIGHT);
 }
 
 static void init(void) {
