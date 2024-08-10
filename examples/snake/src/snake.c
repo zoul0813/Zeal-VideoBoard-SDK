@@ -5,6 +5,7 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
 #include <zos_sys.h>
@@ -18,6 +19,7 @@
 #include "menu.h"
 #include "title.h"
 #include "snake.h"
+#include "assets.h"
 
 #define MINIMUM_WAIT  60
 #define MAX_SPEED     20
@@ -44,24 +46,6 @@ int controller_mode;
 gfx_context vctx;
 int controller_mode;
 uint8_t boost_on = 8;
-
-/**
- * @brief Palette for the graphics tiles including the snake, the apple and the background
- */
-const uint8_t assets_palette[] = {
-  0x1f, 0xdc, 0x00, 0x00, 0xc0, 0x08, 0xa1, 0x8a, 0x62, 0x53, 0x40, 0xda,
-  0x9b, 0x4b, 0xdf, 0x5b, 0xff, 0x5b, 0xc3, 0x05, 0x7f, 0x6c, 0xdc, 0x7c,
-  0x83, 0x66, 0x85, 0x5e, 0xbf, 0x9d, 0xbe, 0xf7,
-  /* Background colors */
-  0xa8, 0xae, 0x27, 0x9e, 0x44, 0x6c
-};
-
-/**
- * @brief Palette for the text, including numbers and letters
- */
-const uint8_t letters_palette[] = {
-  0x00, 0x00, 0x83, 0xa8, 0xcb, 0xf1, 0xc7, 0xfc, 0x52, 0xff, 0xff, 0xff
-};
 
 int main(int argc, char** argv) {
     if (argc == 1){
@@ -195,6 +179,8 @@ static void update_stat(void) {
 }
 
 static void init(void) {
+    srand(time());
+
     /* Initialize the keyboard by setting it to raw and non-blocking */
     void* arg = (void*) (KB_READ_NON_BLOCK | KB_MODE_RAW);
     ioctl(DEV_STDIN, KB_CMD_SET_MODE, arg);
@@ -494,58 +480,7 @@ static uint8_t position_in_snake(uint8_t from, uint8_t x, uint8_t y) {
     return 0;
 }
 
-
-/**
- * @brief Place the fruit randomly
- */
-static void place_fruit(Point* point) __naked
-{
-    (void) point;
-__asm
-    ; Max 19 for the X coordinate
-    ld a, r
-    and #0x1f    ; A % 32
-    cp #20
-    jr c, _x_ok
-    sub #20
-_x_ok:
-    ld (hl), a
-    inc hl
-
-    ld a, r
-    and #0x0f    ; A % 16
-    ; A must be between 0 and 13 (last line reserved)
-    cp #14
-    jr c, _y_ok
-    sub #14
-_y_ok:
-    ld (hl), a
-__endasm;
-}
-
-/**
- * @brief Workaround to include a binary file in the program
- */
-void _snake_tileset() {
-    __asm
-__snake_tileset_start:
-    .incbin "assets/snake_tileset.zts"
-__snake_tileset_end:
-    __endasm;
-}
-
-void _letters_tileset() {
-    __asm
-__letters_tileset_start:
-    .incbin "assets/letters.zts"
-__letters_tileset_end:
-    __endasm;
-}
-
-void _numbers_tileset() {
-    __asm
-__numbers_tileset_start:
-    .incbin "assets/numbers.zts"
-__numbers_tileset_end:
-    __endasm;
+static void place_fruit(Point* point) {
+    point->x = rand() % WIDTH;
+    point->y = rand() % HEIGHT;
 }
