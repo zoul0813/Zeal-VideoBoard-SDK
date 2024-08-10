@@ -23,7 +23,7 @@
  * @brief Workaround to include a binary file in the program
  */
 
-void _snake_palette() {
+void _snake_palette(void) {
     __asm
 __snake_palette_start:
     .incbin "assets/snake_tileset.ztp"
@@ -31,7 +31,7 @@ __snake_palette_end:
     __endasm;
 }
 
-void _snake_tileset() {
+void _snake_tileset(void) {
     __asm
 __snake_tileset_start:
     .incbin "assets/snake_tileset.zts"
@@ -39,7 +39,7 @@ __snake_tileset_end:
     __endasm;
 }
 
-void _letters_palette() {
+void _letters_palette(void) {
     __asm
 __letters_palette_start:
     .incbin "assets/letters.ztp"
@@ -47,7 +47,7 @@ __letters_palette_end:
     __endasm;
 }
 
-void _letters_tileset() {
+void _letters_tileset(void) {
     __asm
 __letters_tileset_start:
     .incbin "assets/letters.zts"
@@ -55,7 +55,7 @@ __letters_tileset_end:
     __endasm;
 }
 
-void _numbers_tileset() {
+void _numbers_tileset(void) {
     __asm
 __numbers_tileset_start:
     .incbin "assets/numbers.zts"
