@@ -21,9 +21,6 @@
 #include "assets.h"
 #include "game.h"
 
-#define MINIMUM_WAIT  60
-#define MAX_SPEED     20
-
 static uint8_t play(void);
 static uint8_t menu(void);
 static void init(void);
@@ -192,9 +189,16 @@ static void init(void) {
     if (err) exit(1);
 
     /* The first color is transparent in our palette, still valid */
-    err = gfx_palette_load(&vctx, assets_palette, sizeof(assets_palette), 0);
+    extern uint8_t _letters_palette_start;
+    extern uint8_t _letters_palette_end;
+    const size_t letters_palette_size = &_letters_palette_end - &_letters_palette_start;
+    err = gfx_palette_load(&vctx, &_letters_palette_start, letters_palette_size, 32);
     if (err) exit(1);
-    err = gfx_palette_load(&vctx, letters_palette, sizeof(letters_palette), 32);
+
+    extern uint8_t _snake_palette_start;
+    extern uint8_t _snake_palette_end;
+    const size_t snake_palette_size = &_snake_palette_end - &_snake_palette_start;
+    err = gfx_palette_load(&vctx, &_snake_palette_start, snake_palette_size, 0);
     if (err) exit(1);
 
     /* Load the tilesets */
