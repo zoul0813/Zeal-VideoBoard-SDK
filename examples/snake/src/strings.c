@@ -1,6 +1,6 @@
 #include <string.h>
 #include "strings.h"
-#include "snake.h"
+#include "game.h"
 
 void print_string(const char* str, uint8_t x, uint8_t y)
 {

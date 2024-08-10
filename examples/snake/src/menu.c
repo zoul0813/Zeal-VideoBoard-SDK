@@ -5,7 +5,7 @@
 #include <zos_keyboard.h>
 #include "menu.h"
 #include "strings.h"
-#include "snake.h"
+#include "game.h"
 #include "title.h"
 
 uint8_t menu_current_selection = 0;

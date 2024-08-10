@@ -18,8 +18,8 @@
 #include "controller.h"
 #include "menu.h"
 #include "title.h"
-#include "snake.h"
 #include "assets.h"
+#include "game.h"
 
 #define MINIMUM_WAIT  60
 #define MAX_SPEED     20
