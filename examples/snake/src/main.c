@@ -15,6 +15,7 @@
 #include <zos_time.h>
 #include <zos_video.h>
 #include <zvb_gfx.h>
+#include "utils.h"
 #include "controller.h"
 #include "menu.h"
 #include "title.h"
@@ -34,7 +35,6 @@ static void place_fruit(Point* point);
 static void end_game(void);
 static void quit_game(void);
 static uint8_t position_in_snake(uint8_t from, uint8_t x, uint8_t y);
-static void nprint_string(const char* str, uint8_t len, uint8_t x, uint8_t y);
 static void update_stat(void);
 
 Snake snake;
@@ -176,7 +176,12 @@ static void update_stat(void) {
 }
 
 static void init(void) {
-    srand(time());
+    int seed = get_random();
+    // random number of instructions?
+    for(uint8_t i = seed; i > 0; --i) {
+        seed += seed & get_random();
+    }
+    srand(seed);
 
     /* Initialize the keyboard by setting it to raw and non-blocking */
     void* arg = (void*) (KB_READ_NON_BLOCK | KB_MODE_RAW);

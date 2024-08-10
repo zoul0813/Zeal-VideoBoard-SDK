@@ -25,7 +25,7 @@ endif
 
 
 # Specify the files to compile and the name of the final binary
-SRCS=main.c controller.c strings.c menu.c title.c
+SRCS=main.c controller.c utils.c menu.c title.c
 BIN=snake.bin
 
 # Directory where source files are and where the binaries will be put

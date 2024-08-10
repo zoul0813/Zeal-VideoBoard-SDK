@@ -4,7 +4,7 @@
 #include <zos_vfs.h>
 #include <zos_keyboard.h>
 #include "menu.h"
-#include "strings.h"
+#include "utils.h"
 #include "game.h"
 #include "title.h"
 

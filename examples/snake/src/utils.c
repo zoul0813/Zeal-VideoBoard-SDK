@@ -1,5 +1,5 @@
 #include <string.h>
-#include "strings.h"
+#include "utils.h"
 #include "game.h"
 
 void print_string(const char* str, uint8_t x, uint8_t y)
@@ -10,4 +10,13 @@ void print_string(const char* str, uint8_t x, uint8_t y)
 void nprint_string(const char* str, uint8_t len, uint8_t x, uint8_t y)
 {
     gfx_tilemap_load(&vctx, str, len, 1, x, y);
+}
+
+char get_random(void) __naked
+{
+__asm
+    ld a, r
+    ld l, a
+    ret
+__endasm;
 }
