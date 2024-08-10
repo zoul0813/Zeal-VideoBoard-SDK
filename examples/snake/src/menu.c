@@ -6,6 +6,7 @@
 #include "menu.h"
 #include "strings.h"
 #include "snake.h"
+#include "title.h"
 
 uint8_t menu_current_selection = 0;
 static uint8_t keys[32];
@@ -59,7 +60,7 @@ void draw_menu(void)
 {
   // char text[7];
 
-  print_string("ZEAL SNAKE", WIDTH / 2 - 5, 3);
+  // print_string("ZEAL SNAKE", WIDTH / 2 - 5, 3);
 
   // Game Modes
   print_string("EASY", WIDTH / 2 - 3, MENU_START_Y);
