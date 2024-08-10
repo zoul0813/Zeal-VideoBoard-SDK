@@ -126,11 +126,11 @@ static void quit_game(void) {
 }
 
 static void end_game(void) {
-    /* Change the colors of the snake to greyscale */
-    const uint8_t palette_from = 6;
-    const uint16_t colors[] = { 0xae, 0x73, 0xef, 0x7b, 0x10, 0x84 };
+    // /* Change the colors of the snake to greyscale */
+    // const uint8_t palette_from = 6;
+    // const uint16_t colors[] = { 0xae, 0x73, 0xef, 0x7b, 0x10, 0x84 };
 
-    gfx_palette_load(&vctx, colors, 3, palette_from);
+    // gfx_palette_load(&vctx, colors, 3, palette_from);
 
     for (int i = 0; i < HEIGHT; i++) {
         for (int j = 0; j < WIDTH; j++) {
