@@ -4,8 +4,6 @@
  * SPDX-License-Identifier: CC0-1.0
  */
 
-#include <stdio.h>
-#include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
 #include <zos_sys.h>
@@ -43,6 +41,11 @@ int controller_mode;
 gfx_context vctx;
 int controller_mode;
 uint8_t boost_on = 8;
+
+/* Background colors */
+const uint8_t background_palette[] = {
+  0xA8, 0xAE, 0x27, 0x9E, 0x44, 0x6C
+};
 
 int main(int argc, char** argv) {
     if (argc == 1){
@@ -140,9 +143,6 @@ static void end_game(void) {
     }
 }
 
-#define BACKGROUND_INDEX    16
-#define BACKGROUND_TILE     32
-
 static void draw_background(void) {
     uint8_t line[WIDTH + 1];
     /* Tile 15 is a transparent tile, fill layer1 with it */
@@ -176,13 +176,6 @@ static void update_stat(void) {
 }
 
 static void init(void) {
-    int seed = get_random();
-    // random number of instructions?
-    for(uint8_t i = seed; i > 0; --i) {
-        seed += seed & get_random();
-    }
-    srand(seed);
-
     /* Initialize the keyboard by setting it to raw and non-blocking */
     void* arg = (void*) (KB_READ_NON_BLOCK | KB_MODE_RAW);
     ioctl(DEV_STDIN, KB_CMD_SET_MODE, arg);
@@ -194,17 +187,22 @@ static void init(void) {
     if (err) exit(1);
 
     /* The first color is transparent in our palette, still valid */
+    extern uint8_t _snake_palette_start;
+    extern uint8_t _snake_palette_end;
+    const size_t snake_palette_size = &_snake_palette_end - &_snake_palette_start;
+    err = gfx_palette_load(&vctx, &_snake_palette_start, snake_palette_size, 0);
+    if (err) exit(1);
+
+    err = gfx_palette_load(&vctx, background_palette, sizeof(background_palette), BACKGROUND_INDEX);
+    if (err) exit(1);
+
     extern uint8_t _letters_palette_start;
     extern uint8_t _letters_palette_end;
     const size_t letters_palette_size = &_letters_palette_end - &_letters_palette_start;
     err = gfx_palette_load(&vctx, &_letters_palette_start, letters_palette_size, 32);
     if (err) exit(1);
 
-    extern uint8_t _snake_palette_start;
-    extern uint8_t _snake_palette_end;
-    const size_t snake_palette_size = &_snake_palette_end - &_snake_palette_start;
-    err = gfx_palette_load(&vctx, &_snake_palette_start, snake_palette_size, 0);
-    if (err) exit(1);
+
 
     /* Load the tilesets */
     extern uint8_t _snake_tileset_end;
@@ -490,6 +488,6 @@ static uint8_t position_in_snake(uint8_t from, uint8_t x, uint8_t y) {
 }
 
 static void place_fruit(Point* point) {
-    point->x = rand() % WIDTH;
-    point->y = rand() % HEIGHT;
+    point->x = rand8() % WIDTH;
+    point->y = rand8() % HEIGHT;
 }
