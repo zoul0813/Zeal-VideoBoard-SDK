@@ -1,5 +1,3 @@
-#include <stdio.h>
-#include <string.h>
 #include <zos_sys.h>
 #include <zos_vfs.h>
 #include <zos_keyboard.h>

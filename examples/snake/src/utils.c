@@ -1,5 +1,5 @@
-#include <string.h>
 #include "utils.h"
+#include <string.h>
 #include "game.h"
 
 void print_string(const char* str, uint8_t x, uint8_t y)
@@ -27,7 +27,7 @@ char rand8_quick(void) __naked
 
 /**
  * Return an 8-bit pseudo-random number
- * 
+ *
  * This is a combination of an LFSR w/ Counter
 */
 char rand8(void) __naked
