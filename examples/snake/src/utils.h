@@ -9,4 +9,5 @@
 
 void print_string(const char* str, uint8_t x, uint8_t y);
 void nprint_string(const char* str, uint8_t len, uint8_t x, uint8_t y);
-char get_random(void);
+char rand8_quick(void);
+char rand8(void);
