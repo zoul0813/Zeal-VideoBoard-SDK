@@ -24,41 +24,41 @@
  */
 
 void _snake_palette(void) {
-    __asm
-__snake_palette_start:
-    .incbin "assets/snake_tileset.ztp"
-__snake_palette_end:
-    __endasm;
+    __asm__(
+    "__snake_palette_start:\n"
+    "    .incbin \"assets/snake_tileset.ztp\"\n"
+    "__snake_palette_end:\n"
+    );
 }
 
 void _snake_tileset(void) {
-    __asm
-__snake_tileset_start:
-    .incbin "assets/snake_tileset.zts"
-__snake_tileset_end:
-    __endasm;
+    __asm__(
+    "__snake_tileset_start:\n"
+    "    .incbin \"assets/snake_tileset.zts\"\n"
+    "__snake_tileset_end:\n"
+    );
 }
 
 void _letters_palette(void) {
-    __asm
-__letters_palette_start:
-    .incbin "assets/letters.ztp"
-__letters_palette_end:
-    __endasm;
+    __asm__(
+    "__letters_palette_start:\n"
+    "    .incbin \"assets/letters.ztp\"\n"
+    "__letters_palette_end:\n"
+    );
 }
 
 void _letters_tileset(void) {
-    __asm
-__letters_tileset_start:
-    .incbin "assets/letters.zts"
-__letters_tileset_end:
-    __endasm;
+    __asm__(
+"__letters_tileset_start:\n"
+"    .incbin \"assets/letters.zts\"\n"
+"__letters_tileset_end:\n"
+    );
 }
 
 void _numbers_tileset(void) {
-    __asm
-__numbers_tileset_start:
-    .incbin "assets/numbers.zts"
-__numbers_tileset_end:
-    __endasm;
+    __asm__(
+    "__numbers_tileset_start:\n"
+    "    .incbin \"assets/numbers.zts\"\n"
+    "__numbers_tileset_end:\n"
+    );
 }
