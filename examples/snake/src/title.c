@@ -20,6 +20,7 @@
 
 
 extern gfx_context vctx;
+unsigned long _title_size = 0;
 
 static void bounce_letter(uint8_t idx, uint8_t letter, uint16_t x)
 {
@@ -62,8 +63,14 @@ static void bounce_letter(uint8_t idx, uint8_t letter, uint16_t x)
     }
 }
 
+static uint8_t flip_head = 0;
+void title_flip_head(void) {
+    flip_head ^= 1;
+    gfx_sprite_flags flags = flip_head ? 0 : SPRITE_FLIP_Y;
+    gfx_sprite_set_flags(&vctx, _title_size - 1, flags);
+}
 
-unsigned long _title_size = 0;
+
 void play_title(void) {
     /* Keep the trailing \0 to show the snake head */
     const char title[] = "SNAKE";
@@ -74,14 +81,11 @@ void play_title(void) {
         bounce_letter(i, title[i], (x + i + 1) << 4);
     }
 
-    /* Flip the snake */
-    for (uint8_t i = 0; i < 4; i++) {
-        gfx_sprite_flags flags = (i & 1) ? 0 : SPRITE_FLIP_Y;
-        gfx_sprite_set_flags(&vctx, _title_size - 1, flags);
-        msleep(256);
-    }
-
-    // msleep(1000);
+    // /* Flip the snake */
+    // for (uint8_t i = 0; i < 4; i++) {
+    //     title_flip_head();
+    //     msleep(256);
+    // }
 }
 
 void hide_title(void) {

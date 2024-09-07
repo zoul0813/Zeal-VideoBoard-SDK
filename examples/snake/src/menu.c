@@ -3,11 +3,14 @@
 #include <zos_keyboard.h>
 #include "menu.h"
 #include "utils.h"
+#include "controller.h"
 #include "game.h"
 #include "title.h"
 
+extern gfx_context vctx;
 uint8_t menu_current_selection = 0;
 static uint8_t keys[32];
+static uint8_t last_key = 0;
 
 uint8_t get_menu_selection(void) {
   return menu_current_selection;
@@ -21,8 +24,15 @@ uint8_t process_menu(void)
   while (!exit)
   {
     read(DEV_STDIN, keys, &size);
-    if (size == 0)
+    if (size == 0 && controller_mode) {
+      size = read_controller(keys);
+      exit = 1;
+    }
+
+    if (size == 0) {
+      last_key = 0;
       break;
+    }
 
     for (uint8_t i = 0; i < size; i++) {
       if (keys[i] == KB_RELEASED) {
@@ -30,12 +40,16 @@ uint8_t process_menu(void)
       } else {
         switch(keys[i]) {
           case KB_UP_ARROW:
+            if(last_key == KB_UP_ARROW) continue;
+            last_key = KB_UP_ARROW;
             if(menu_current_selection == 0) {
               menu_current_selection = 4;
             }
             menu_current_selection--;
             return 1;
           case KB_DOWN_ARROW:
+            if(last_key == KB_DOWN_ARROW) continue;
+            last_key = KB_DOWN_ARROW;
             menu_current_selection++;
             if(menu_current_selection > 3) {
               menu_current_selection = 0;
@@ -44,6 +58,8 @@ uint8_t process_menu(void)
           case KB_RIGHT_ARROW:
           case KB_KEY_ENTER:
           case KB_KEY_SPACE:
+            if(last_key == KB_RIGHT_ARROW) continue;
+            last_key = KB_RIGHT_ARROW;
             return 255;
         }
       }

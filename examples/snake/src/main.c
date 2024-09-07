@@ -62,16 +62,17 @@ int main(int argc, char** argv) {
 }
 
 static uint8_t menu(void) {
-    static uint8_t showed = 0;
-    /* Small workaround to get the title to play only once, this should be properly
-     * done by moving this to the caller, but it would require loading the tiles first,
-     * which is done in `init_game` currently...  */
-    if (!showed) {
-        play_title();
-        showed = 1;
-    }
+    static uint8_t frames = 0;
+    play_title();
     draw_menu();
     while(1) {
+        gfx_wait_vblank(&vctx);
+        ++frames;
+        if(frames >= 180) {
+            frames = 0;
+            title_flip_head();
+        }
+
         uint8_t state = process_menu();
         if(state > 0) {
             draw_menu();
@@ -97,7 +98,7 @@ static uint8_t play(void) {
         state = input();
         if(state != 0) quit_game();
         gfx_wait_vblank(&vctx);
-        frames++;
+        ++frames;
         if(frames >= MINIMUM_WAIT - snake.speed) {
             if(update() || check_collision())
                 break;
@@ -126,6 +127,7 @@ static uint8_t play(void) {
 
 static void quit_game(void) {
     ioctl(DEV_STDOUT, CMD_RESET_SCREEN, NULL);
+    // TODO: clear screen and sprites!
     exit(0);
 }
 
