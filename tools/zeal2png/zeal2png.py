@@ -10,14 +10,13 @@ parser = argparse.ArgumentParser("zeal2png")
 parser.add_argument("-t","--tileset", help="Zeal Tileset (ZTS)", required=True)
 parser.add_argument("-p", "--palette", help="Zeal Palette (ZTP)", required=True)
 parser.add_argument("-o", "--output", help="Output PNG Filename")
-parser.add_argument("-b", "--bpp", help="Bits Per Pixel")
+parser.add_argument("-b", "--bpp", help="Bits Per Pixel", type=int, default=8, choices=[1,4,8])
 parser.add_argument("-c", "--compressed", help="Decompress RLE", action="store_true")
 parser.add_argument("-s", "--show", help="Open in Viewer", action="store_true")
 
 tiles = []
 tile_width = 16
 tile_height = 16
-tile_size = tile_width * tile_height
 tiles_per_sheet = 16
 
 def get_tilesheet_size(tiles):
@@ -50,36 +49,92 @@ def getPalette(paletteFile):
     palette.append(b)
   return palette
 
-def convert(args):
-  palette = getPalette(args.palette)
+def makeSprite(pixels):
+  # print("pixels", pixels)
+  image = Image.frombytes(
+    "RGB", # mode
+    (tile_width,tile_height), # size
+    pixels, # data
+    "raw", # decoder name
+    "BGR;16",
+    0, 1
+    )
+  return image
 
-  f = open(args.tileset, mode="rb")
-  tiles = []
-  tile = f.read(tile_size)
-  image_count = 0
-  while tile:
-    if len(tile) < tile_size:
-      break
+def getSpritePixels(bpp, tile, palette):
+  sprites = []
 
+  if bpp == 1:
+    # one bit per pixel
+    for pixel in tile:
+      pixels = bytearray()
+      for b in range(8):
+        p = (b >> 1) & 1
+        (hi,lo) = RGB565toRGB(p, palette)
+        pixels.append(lo)
+        pixels.append(hi)
+      sprites.append(pixels)
+
+  elif bpp <= 4:
+    # one nibble per pixel
+    pixels = bytearray()
+    for pixel in tile:
+      p1,p2 = pixel >> 4, pixel & 0x0F
+
+      (hi,lo) = RGB565toRGB(p1, palette)
+      pixels.append(lo)
+      pixels.append(hi)
+
+      (hi,lo) = RGB565toRGB(p2, palette)
+      pixels.append(lo)
+      pixels.append(hi)
+    sprites.append(pixels)
+
+  else:
+    # one byte per pixel
     pixels = bytearray()
     for pixel in tile:
       (hi,lo) = RGB565toRGB(pixel, palette)
       pixels.append(lo)
       pixels.append(hi)
+    sprites.append(pixels)
 
-    image = Image.frombytes(
-      "RGB", # mode
-      (tile_width,tile_height), # size
-      pixels, # data
-      "raw", # decoder name
-      "BGR;16",
-      0, 1
-      )
+  return sprites
 
-    if image:
+
+def convert(args):
+  palette = getPalette(args.palette)
+
+  f = open(args.tileset, mode="rb")
+  tiles = []
+  image_count = 0
+
+  tilesize_bpp = 0
+  if args.bpp == 1:
+    tilesize_bpp = 32
+  elif args.bpp <= 4:
+    tilesize_bpp = 128
+  else:
+    tilesize_bpp = tile_width * tile_height
+
+  tile = f.read(tilesize_bpp)
+
+  while tile:
+    print("tile len", len(tile), tilesize_bpp)
+    if len(tile) < tilesize_bpp:
+      break
+
+    images = []
+    for pixels in getSpritePixels(args.bpp, tile, palette):
+      images.append(makeSprite(pixels))
+
+    print("images", len(images))
+    for image in images:
       tiles.append(image)
       image_count += 1
-    tile = f.read(tile_size)
+
+    tile = f.read(tilesize_bpp)
+
   f.close()
 
   tilesheet_size = get_tilesheet_size(tiles)
@@ -87,10 +142,14 @@ def convert(args):
 
   sprites_x = int(tilesheet_size[0]/tile_width)
   sprites_y = int(tilesheet_size[1]/tile_height)
-  for x in range(0,sprites_x):
-    for y in range(0, sprites_y):
-      index = (y*x) + x
-      spritesheet.paste(tiles[index], (x * tile_width,y*tile_height))
+  print("sprites_x", sprites_x, "sprites_y", sprites_y, "tiles", len(tiles))
+  for y in range(0, sprites_y):
+    for x in range(0,sprites_x):
+      index = (y*sprites_x) + x
+      if 0 <= index < len(tiles):
+        print("sprite index", index)
+        tile = tiles[index]
+        spritesheet.paste(tile, (x * tile_width,y*tile_height))
 
   print("sprite count", image_count)
   return spritesheet
