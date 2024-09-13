@@ -3,14 +3,10 @@
  *
  * SPDX-License-Identifier: CC0-1.0
  */
+
+#include <stdio.h>
 #include <zos_keyboard.h>
 #include "controller.h"
-
-/**
- * @file The code was taken from Zeal 8-bit SNES project on Github
- * and converted to C code:
- *  https://github.com/Zeal8bit/Zeal-SNES-Adapter
- */
 
 /**
  * @brief Define some variables to access the PIO from C code
@@ -27,6 +23,8 @@ __sfr __at(0xd2) IO_PIO_CTRL_A;
 #define IO_DATA     0
 #define IO_LATCH    2
 #define IO_CLOCK    3
+
+uint16_t buttons = 0x00; // nothing
 
 void controller_init(void)
 {
@@ -55,7 +53,7 @@ void controller_init(void)
 /**
  * @brief Read the controller state
  */
-uint16_t read_controller(uint8_t* keys)
+uint16_t controller_read(void)
 {
     /**
      * Generate a pulse on the LATCH pin, CLOCK must remain high during this process
@@ -63,31 +61,21 @@ uint16_t read_controller(uint8_t* keys)
      */
     IO_PIO_DATA_A = 1 << IO_CLOCK | 1 << IO_LATCH;
     IO_PIO_DATA_A = 1 << IO_CLOCK;
-    /* Now, the DATA lines contain the first button (B) state.
-     * Pulse the clock 4 times to skip the next 3 buttons: Y, start, select */
-    CLOCK_ONCE(); // Y
-    CLOCK_ONCE(); // Select
-    CLOCK_ONCE(); // Start
-    CLOCK_ONCE(); // Up
-    if (GET_DATA() == 0) {
-        *keys = KB_UP_ARROW;
-        return 1;
-    }
-    CLOCK_ONCE(); // Down
-    if (GET_DATA() == 0) {
-        *keys = KB_DOWN_ARROW;
-        return 1;
-    }
-    CLOCK_ONCE(); // Left
-    if (GET_DATA() == 0) {
-        *keys = KB_LEFT_ARROW;
-        return 1;
-    }
-    CLOCK_ONCE(); // Right
-    if (GET_DATA() == 0) {
-        *keys = KB_RIGHT_ARROW;
-        return 1;
-    }
+    // Now, the DATA lines contain the first button (B) state.
 
-    return 0;
+    buttons = GET_DATA() == 0 ? 0x8000 : 0;
+    // process the remaining 1 buttons (last 4 are unused)
+    for(uint8_t i = 0; i < 11; ++i) {
+        buttons = buttons >> 1;
+        CLOCK_ONCE(); // pulse the clock
+        buttons |= GET_DATA() == 0 ? 0x8000 : 0; // OR the current button
+    }
+    // shift over the 4 last unused bits
+    buttons >>= 4;
+
+    return buttons;
+}
+
+uint8_t controller_pressed(uint16_t button) {
+    return buttons & button;
 }

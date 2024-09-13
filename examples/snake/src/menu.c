@@ -4,66 +4,49 @@
 #include "menu.h"
 #include "utils.h"
 #include "controller.h"
+#include "keyboard.h"
 #include "game.h"
 #include "title.h"
 
 extern gfx_context vctx;
 uint8_t menu_current_selection = 0;
-static uint8_t keys[32];
-static uint8_t last_key = 0;
 
 uint8_t get_menu_selection(void) {
   return menu_current_selection;
 }
 
+uint16_t last_input = 0;
 uint8_t process_menu(void)
 {
-  uint16_t size = 32;
-  uint8_t exit = 0;
+  uint16_t input = keyboard_read();
+  if (controller_mode) {
+    // OR the two inputs to make a single input
+    input |= controller_read();
+  }
 
-  while (!exit)
-  {
-    read(DEV_STDIN, keys, &size);
-    if (size == 0 && controller_mode) {
-      size = read_controller(keys);
-      exit = 1;
-    }
+  if(input == last_input) return; // nothing to do here?
+  last_input = input; // update last input
+  if(!input) return 0; // no input
 
-    if (size == 0) {
-      last_key = 0;
-      break;
+  // TODO: handle input to change menu selection
+  if(input & SNES_UP) {
+    if(menu_current_selection == 0) {
+      menu_current_selection = 4;
     }
+    menu_current_selection--;
+    return 1;
+  }
 
-    for (uint8_t i = 0; i < size; i++) {
-      if (keys[i] == KB_RELEASED) {
-        i++;
-      } else {
-        switch(keys[i]) {
-          case KB_UP_ARROW:
-            if(last_key == KB_UP_ARROW) continue;
-            last_key = KB_UP_ARROW;
-            if(menu_current_selection == 0) {
-              menu_current_selection = 4;
-            }
-            menu_current_selection--;
-            return 1;
-          case KB_DOWN_ARROW:
-            if(last_key == KB_DOWN_ARROW) continue;
-            last_key = KB_DOWN_ARROW;
-            menu_current_selection++;
-            if(menu_current_selection > 3) {
-              menu_current_selection = 0;
-            }
-            return 1;
-          case KB_RIGHT_ARROW:
-          case KB_KEY_ENTER:
-          case KB_KEY_SPACE:
-            if(last_key == KB_RIGHT_ARROW) continue;
-            last_key = KB_RIGHT_ARROW;
-            return 255;
-        }
-      }
+  if(input & SNES_DOWN) {
+    menu_current_selection++;
+    if(menu_current_selection > 3) {
+      menu_current_selection = 0;
     }
+    return 1;
+  }
+
+  if(input & (SNES_RIGHT | SNES_START)) {
+    return 255;
   }
 
   return 0;
