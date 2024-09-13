@@ -18,23 +18,22 @@
 #define BACKGROUND_TILE     32
 
 static void init_game(void);
-static void draw(void);
 static void draw_background(void);
-static void update(void);
+static void draw();
+static void update(uint16_t frames);
 
 gfx_context vctx;
-gfx_sprite sprite;
+gfx_sprite sprite1;
 
 int main(void) {
     init_game();
 
-    uint8_t frames = 0;
+    uint16_t frames = 0;
     while (1) {
         frames++;
-        if(frames % 120 == 0) {
-            update();
+        update(frames);
+        if(frames % 90 == 0) {
             draw();
-            frames = 1;
         }
     }
     // return 0; // unreachable
@@ -71,20 +70,20 @@ static void init_game(void) {
     gfx_error err = gfx_initialize(ZVB_CTRL_VID_MODE_GFX_320_8BIT, &vctx);
     if (err) exit(1);
 
-    extern uint8_t _char_palette_end;
-    extern uint8_t _char_palette_start;
-    const size_t palette_size = &_char_palette_end - &_char_palette_start;
+    extern uint8_t _tank_palette_end;
+    extern uint8_t _tank_palette_start;
+    const size_t palette_size = &_tank_palette_end - &_tank_palette_start;
 
-    err = gfx_palette_load(&vctx, &_char_palette_start, palette_size, 0);
+    err = gfx_palette_load(&vctx, &_tank_palette_start, palette_size, 0);
     if (err) exit(1);
 
-    extern uint8_t _char_sprite_end;
-    extern uint8_t _char_sprite_start;
-    const size_t sprite_size = &_char_sprite_end - &_char_sprite_start;
+    extern uint8_t _tank_sprite_end;
+    extern uint8_t _tank_sprite_start;
+    const size_t sprite_size = &_tank_sprite_end - &_tank_sprite_start;
     gfx_tileset_options options = {
         .compression = TILESET_COMP_NONE,
     };
-    err = gfx_tileset_load(&vctx, &_char_sprite_start, sprite_size, &options);
+    err = gfx_tileset_load(&vctx, &_tank_sprite_start, sprite_size, &options);
     if (err) exit(1);
 
     gfx_tileset_add_color_tile(&vctx, BACKGROUND_TILE, BACKGROUND_INDEX);
@@ -94,14 +93,13 @@ static void init_game(void) {
 
     draw_background();
 
-    sprite.flags = SPRITE_NONE;
+    sprite1.flags = SPRITE_NONE;
     gfx_sprite_set_tile(&vctx, 0, 1);
-    gfx_sprite_set_tile(&vctx, 1, 2);
 
     gfx_enable_screen(1);
 }
 
-static void draw(void) {
+static void draw() {
     static uint16_t x = 16;
     static uint16_t y = 16;
     static int8_t xd = 1;
@@ -123,48 +121,51 @@ static void draw(void) {
     if(y > 240) { // 240 - (16 * 2)
         yd = -1;
     }
-    if(y <= 32) {
+    if(y <= 16) {
         yd = 1;
     }
 
-    sprite.x = x;
-    sprite.y = y;
-    sprite.tile = 1;
+    sprite1.x = x;
+    sprite1.y = y;
 
     if(xd < 0) {
-        sprite.flags = SPRITE_NONE;
+        sprite1.flags = SPRITE_NONE;
     } else {
-        sprite.flags = SPRITE_FLIP_X;
+        sprite1.flags = SPRITE_FLIP_X;
     }
 
-    gfx_sprite_render(&vctx, 0, &sprite);
-    sprite.y -= 16;
-    sprite.tile = 2;
-    gfx_sprite_render(&vctx, 1, &sprite);
+    uint8_t err = gfx_sprite_render(&vctx, 0, &sprite1);
+    if(err != 0) {
+        printf("graphics error: %d", err);
+        exit(1);
+    }
 }
 
-static void update(void) {
-    // move sprites
+static void update(uint16_t frames) {
+    if(frames % 512 == 0) {
+        sprite1.tile ^= 1;
+
+    }
 }
 
 /**
  * @brief Workaround to include a binary file in the program
  */
-void _char_palette() {
+void _tank_palette() {
     __asm
-__char_palette_start:
-    .incbin "assets/chars.ztp"
-__char_palette_end:
+__tank_palette_start:
+    .incbin "assets/tank.ztp"
+__tank_palette_end:
     __endasm;
 }
 
 /**
  * @brief Workaround to include a binary file in the program
  */
-void _char_sprite() {
+void _tank_sprite() {
     __asm
-__char_sprite_start:
-    .incbin "assets/chars.zts"
-__char_sprite_end:
+__tank_sprite_start:
+    .incbin "assets/tank.zts"
+__tank_sprite_end:
     __endasm;
 }
