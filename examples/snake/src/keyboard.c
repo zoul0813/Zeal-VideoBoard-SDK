@@ -5,11 +5,12 @@
 #include "keyboard.h"
 #include "controller.h"
 
-static uint16_t keys = 0;
+static uint16_t keys = NULL;
 static uint8_t key_buffer[32];
 
 void keyboard_flush(void) {
   /* Flush the keyboard fifo */
+  keys = NULL;
   uint8_t size = 8;
   while (size) {
     read(DEV_STDIN, key_buffer, &size);
@@ -20,6 +21,7 @@ void keyboard_init(void) {
   /* Initialize the keyboard by setting it to raw and non-blocking */
   void* arg = (void*) (KB_READ_NON_BLOCK | KB_MODE_RAW);
   ioctl(DEV_STDIN, KB_CMD_SET_MODE, arg);
+  keyboard_flush();
 }
 
 uint16_t keyboard_read(void) {
@@ -53,18 +55,8 @@ uint16_t keyboard_read(void) {
       }
     }
   }
-
-  return keys;
 }
 
 uint8_t keyboard_pressed(uint16_t button) {
     return keys & button;
-}
-
-void keyboard_wait(uint16_t key) {
-  while(1) {
-      uint16_t buttons = keyboard_read();
-      if(!key && buttons) return; // any key
-      if(buttons & key) return; // match
-  }
 }

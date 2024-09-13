@@ -25,5 +25,7 @@
 #define SNES_UNUSED4    0x8000  // 16
 
 void controller_init(void);
+void controller_flush(void);
+
 uint16_t controller_read(void);
 uint8_t controller_pressed(uint16_t button);

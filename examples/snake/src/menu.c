@@ -24,9 +24,9 @@ uint8_t process_menu(void)
     input |= controller_read();
   }
 
-  if(input == last_input) return; // nothing to do here?
+  if(input == last_input) return 0; // nothing to do here?
   last_input = input; // update last input
-  if(!input) return 0; // no input
+  if(input == 0) return 0; // no input
 
   // TODO: handle input to change menu selection
   if(input & SNES_UP) {

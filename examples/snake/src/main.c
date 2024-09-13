@@ -29,10 +29,11 @@ static void init_game(void);
 static void wait(void);
 static void draw(void);
 static uint8_t input(void);
+static void input_wait(uint16_t waitFor);
 static uint8_t update(void);
 static uint8_t check_collision(void);
 static void place_fruit(Point* point);
-static void end_game(void);
+static void game_over(void);
 static void quit_game(void);
 static uint8_t position_in_snake(uint8_t from, uint8_t x, uint8_t y);
 static void update_stat(void);
@@ -55,6 +56,13 @@ int main(int argc, char** argv) {
         if (param && (strcmp(param, "-c") == 0)) {
             controller_mode = 1;
             controller_init();
+
+            // verify the controller is actually connected
+            uint16_t test = controller_read();
+            // if unconnected, we'll get back 0xFFFF (all buttons pressed)
+            if(test & 0xFFFF) {
+                controller_mode = 0;
+            }
         }
     }
     init();
@@ -108,10 +116,9 @@ static uint8_t play(void) {
         }
         gfx_wait_end_vblank(&vctx);
     }
-    end_game();
+    game_over();
 
-    keyboard_flush();
-    keyboard_wait(0);
+    input_wait(SNES_START | SNES_SELECT | SNES_B);
 
     return play();
 }
@@ -122,13 +129,7 @@ static void quit_game(void) {
     exit(0);
 }
 
-static void end_game(void) {
-    // /* Change the colors of the snake to greyscale */
-    // const uint8_t palette_from = 6;
-    // const uint16_t colors[] = { 0xae, 0x73, 0xef, 0x7b, 0x10, 0x84 };
-
-    // gfx_palette_load(&vctx, colors, 3, palette_from);
-
+static void game_over(void) {
     for (int i = 0; i < HEIGHT; i++) {
         for (int j = 0; j < WIDTH; j++) {
             gfx_tilemap_place(&vctx, TILE_APPLE, 1, j, i);
@@ -353,6 +354,25 @@ static uint8_t input(void) {
     }
 
     return 0;
+}
+
+static void input_wait(uint16_t waitFor) {
+    while(1) {
+        uint16_t input = keyboard_read();
+        if(controller_mode == 1) {
+            input |= controller_read();
+        }
+        if(waitFor == NULL && input > 0) break;
+        if(input & waitFor) break;
+    }
+
+    while(1) {
+        uint16_t input = keyboard_read();
+        if(controller_mode == 1) {
+            input |= controller_read();
+        }
+        if(input == NULL) break;
+    }
 }
 
 static uint8_t update(void) {
