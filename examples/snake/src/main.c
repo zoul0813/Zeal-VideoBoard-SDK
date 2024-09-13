@@ -15,6 +15,7 @@
 #include <zos_video.h>
 #include <zvb_gfx.h>
 #include "utils.h"
+#include "keyboard.h"
 #include "controller.h"
 #include "menu.h"
 #include "title.h"
@@ -38,7 +39,6 @@ static void update_stat(void);
 
 Snake snake;
 Point fruit;
-int controller_mode;
 gfx_context vctx;
 int controller_mode;
 uint8_t boost_on = 8;
@@ -49,6 +49,7 @@ const uint8_t background_palette[] = {
 };
 
 int main(int argc, char** argv) {
+    keyboard_init();
     if (argc == 1){
         char* param = strtok(argv[0], " ");
         if (param && (strcmp(param, "-c") == 0)) {
@@ -109,18 +110,8 @@ static uint8_t play(void) {
     }
     end_game();
 
-    uint8_t key[8];
-    uint16_t size = 8;
-    /* Flush the keyboard fifo */
-    while (size) {
-        read(DEV_STDIN, key, &size);
-    }
-
-    /* Wait for a key from the user now */
-    do {
-        size = 1;
-        read(DEV_STDIN, &key, &size);
-    } while (size != 1);
+    keyboard_flush();
+    keyboard_wait(0);
 
     return play();
 }
@@ -179,10 +170,6 @@ static void update_stat(void) {
 }
 
 static void init(void) {
-    /* Initialize the keyboard by setting it to raw and non-blocking */
-    void* arg = (void*) (KB_READ_NON_BLOCK | KB_MODE_RAW);
-    ioctl(DEV_STDIN, KB_CMD_SET_MODE, arg);
-
     /* Disable the screen to prevent artifacts from showing */
     gfx_enable_screen(0);
 
@@ -260,7 +247,6 @@ static void init_game(void) {
     snake.body[1].x = WIDTH / 2 - 1;
     snake.body[1].y = HEIGHT / 2;
     snake.direction = DIRECTION_RIGHT;
-    snake.former_direction = DIRECTION_RIGHT;
     snake.speed = 5 * mode;
     snake.score = 0;
     snake.apples_to_boost = boost_on;
@@ -349,72 +335,21 @@ static void draw(void) {
     gfx_tilemap_place(&vctx, TILE_APPLE, 1, fruit.x, fruit.y);
 }
 
-static int8_t check_key(uint8_t key) {
-    switch (key) {
-        case KB_UP_ARROW:
-            if (snake.direction != DIRECTION_DOWN)
-                return DIRECTION_UP;
-            break;
-        case KB_DOWN_ARROW:
-            if (snake.direction != DIRECTION_UP)
-                return  DIRECTION_DOWN;
-            break;
-        case KB_LEFT_ARROW:
-            if (snake.direction != DIRECTION_RIGHT)
-                return DIRECTION_LEFT;
-            break;
-        case KB_RIGHT_ARROW:
-            if (snake.direction != DIRECTION_LEFT)
-                return DIRECTION_RIGHT;
-            break;
-        case KB_ESC:
-            return -2;
-    }
-
-    return -1;
-}
-
-static uint8_t keys[32];
-
 static uint8_t input(void) {
-    uint16_t size = 32;
-    const int8_t last_direction = snake.former_direction;
-    int8_t chosen = -1;
-    uint8_t exit = 0;
-
-    while (!exit) {
-        /* Give priority to the keyboard, if no key is detected, check the external controller */
-        read(DEV_STDIN, keys, &size);
-        /* Since we are in non-blocking mode, `read` syscall can return 0 */
-        if (size == 0 && controller_mode) {
-            size = read_controller(keys);
-            exit = 1;
-        }
-
-        if (size == 0)
-            break;
-
-        for (uint8_t i = 0; i < size; i++) {
-            if (keys[i] == KB_RELEASED) {
-                i++;
-            } else {
-                int8_t direction = check_key(keys[i]);
-                /* Prioritize direction change */
-                if (direction >= 0 && direction != last_direction) {
-                    chosen = direction;
-                    break;
-                } else {
-                    if(direction == -2) {
-                        return 255;
-                    }
-                }
-            }
-        }
+    uint16_t input = keyboard_read();
+    if(controller_mode == 1) {
+        input |= controller_read();
     }
 
-    if (chosen != -1) {
-        snake.direction = chosen;
-        snake.former_direction = chosen;
+    int8_t direction = -1;
+    if(snake.direction != DIRECTION_DOWN && input & SNES_UP) direction = DIRECTION_UP;
+    if(snake.direction != DIRECTION_UP && input & SNES_DOWN) direction = DIRECTION_DOWN;
+    if(snake.direction != DIRECTION_RIGHT && input & SNES_LEFT) direction = DIRECTION_LEFT;
+    if(snake.direction != DIRECTION_LEFT && input & SNES_RIGHT) direction = DIRECTION_RIGHT;
+    if(input & SNES_START) return 255; // Esc/Quit
+
+    if (direction >= 0) {
+        snake.direction = direction;
     }
 
     return 0;

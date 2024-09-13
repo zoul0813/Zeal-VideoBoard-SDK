@@ -57,7 +57,6 @@ typedef struct {
     Point   deleted;
     uint8_t length;
     uint8_t direction;
-    uint8_t former_direction;
     uint8_t just_ate;
     uint16_t score;
     /* 0: slowest, 20: fastest */
