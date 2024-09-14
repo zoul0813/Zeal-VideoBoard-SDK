@@ -71,7 +71,7 @@ void title_flip_head(void) {
 }
 
 
-void play_title(void) {
+void title_play(void) {
     /* Keep the trailing \0 to show the snake head */
     const char title[] = "SNAKE";
     _title_size = sizeof(title);
@@ -88,7 +88,7 @@ void play_title(void) {
     // }
 }
 
-void hide_title(void) {
+void title_hide(void) {
     /* Hide the sprites */
     for (uint8_t i = 0; i < _title_size; i++) {
         gfx_sprite_set_y(&vctx, i, 0);

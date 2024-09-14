@@ -72,7 +72,7 @@ int main(int argc, char** argv) {
 
 static uint8_t menu(void) {
     static uint8_t frames = 0;
-    play_title();
+    title_play();
     draw_menu();
     while(1) {
         gfx_wait_vblank(&vctx);
@@ -92,7 +92,7 @@ static uint8_t menu(void) {
             break;
         }
     }
-    hide_title();
+    title_hide();
     return 0;
 }
 
@@ -124,6 +124,7 @@ static uint8_t play(void) {
 }
 
 static void quit_game(void) {
+    title_hide();
     ioctl(DEV_STDOUT, CMD_RESET_SCREEN, NULL);
     // TODO: clear screen and sprites!
     exit(0);
