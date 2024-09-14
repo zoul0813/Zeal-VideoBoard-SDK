@@ -78,14 +78,9 @@ void title_play(void) {
     const uint8_t x = 7;
 
     for (uint8_t i = 0; i < _title_size; i++) {
-        bounce_letter(i, title[i], (x + i + 1) << 4);
+        // bounce_letter(i, title[i], (x + i + 1) << 4);
+        gfx_sprite_set_y(&vctx, i, TITLE_Y);
     }
-
-    // /* Flip the snake */
-    // for (uint8_t i = 0; i < 4; i++) {
-    //     title_flip_head();
-    //     msleep(256);
-    // }
 }
 
 void title_hide(void) {
