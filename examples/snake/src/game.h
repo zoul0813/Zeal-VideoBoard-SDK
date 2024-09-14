@@ -68,4 +68,4 @@ typedef struct {
 extern Snake snake;
 extern Point fruit;
 extern gfx_context vctx;
-extern int controller_mode;
+extern uint8_t controller_mode;

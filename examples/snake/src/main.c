@@ -41,7 +41,7 @@ static void update_stat(void);
 Snake snake;
 Point fruit;
 gfx_context vctx;
-int controller_mode;
+uint8_t controller_mode;
 uint8_t boost_on = 8;
 
 /* Background colors */
@@ -51,7 +51,7 @@ const uint8_t background_palette[] = {
 
 int main(int argc, char** argv) {
     keyboard_init();
-    if (argc == 1){
+    if (argc == 1) {
         char* param = strtok(argv[0], " ");
         if (param && (strcmp(param, "-c") == 0)) {
             controller_mode = 1;
@@ -100,13 +100,13 @@ static uint8_t play(void) {
     init_game();
     update_stat();
 
-    uint8_t state = 0;
     // initialize frame counter for FPS
     uint8_t frames = 0;
     while (1) {
-        state = input();
-        if(state != 0) quit_game();
         gfx_wait_vblank(&vctx);
+        switch(input()) {
+            case 255: quit_game(); break;
+        }
         ++frames;
         if(frames >= MINIMUM_WAIT - snake.speed) {
             if(update() || check_collision())
@@ -353,6 +353,7 @@ static uint8_t input(void) {
         snake.direction = direction;
     }
 
+
     return 0;
 }
 
@@ -362,7 +363,7 @@ static void input_wait(uint16_t waitFor) {
         if(controller_mode == 1) {
             input |= controller_read();
         }
-        if(waitFor == NULL && input > 0) break;
+        if(waitFor == 0 && input > 0) break;
         if(input & waitFor) break;
     }
 
@@ -371,7 +372,7 @@ static void input_wait(uint16_t waitFor) {
         if(controller_mode == 1) {
             input |= controller_read();
         }
-        if(input == NULL) break;
+        if(input == 0) break;
     }
 }
 

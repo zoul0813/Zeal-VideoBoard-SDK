@@ -24,10 +24,10 @@ __sfr __at(0xd2) IO_PIO_CTRL_A;
 #define IO_LATCH    2
 #define IO_CLOCK    3
 
-uint16_t buttons = NULL; // nothing
+uint16_t buttons = 0; // nothing
 
 void controller_flush(void) {
-    buttons = NULL;
+    buttons = 0;
 }
 
 void controller_init(void)

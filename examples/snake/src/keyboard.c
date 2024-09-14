@@ -5,12 +5,12 @@
 #include "keyboard.h"
 #include "controller.h"
 
-static uint16_t keys = NULL;
+static uint16_t keys = 0;
 static uint8_t key_buffer[32];
 
 void keyboard_flush(void) {
   /* Flush the keyboard fifo */
-  keys = NULL;
+  keys = 0;
   uint8_t size = 8;
   while (size) {
     read(DEV_STDIN, key_buffer, &size);
