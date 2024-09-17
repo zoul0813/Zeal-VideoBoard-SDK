@@ -128,10 +128,10 @@ static void draw() {
     sprite1.x = x;
     sprite1.y = y;
 
-    if(xd < 0) {
+    if(yd < 0) {
         sprite1.flags = SPRITE_NONE;
     } else {
-        sprite1.flags = SPRITE_FLIP_X;
+        sprite1.flags = SPRITE_FLIP_Y;
     }
 
     uint8_t err = gfx_sprite_render(&vctx, 0, &sprite1);
