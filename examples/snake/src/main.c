@@ -50,18 +50,26 @@ const uint8_t background_palette[] = {
 };
 
 int main(int argc, char** argv) {
-    keyboard_init();
+    zos_err_t err = keyboard_init();
+    if(err != ERR_SUCCESS) {
+        printf("Failed to initialize keyboard, %d", err);
+        exit(1);
+    }
+
     if (argc == 1) {
         char* param = strtok(argv[0], " ");
         if (param && (strcmp(param, "-c") == 0)) {
             controller_mode = 1;
-            controller_init();
-
-            // verify the controller is actually connected
-            uint16_t test = controller_read();
-            // if unconnected, we'll get back 0xFFFF (all buttons pressed)
-            if(test & 0xFFFF) {
-                controller_mode = 0;
+            err = controller_init();
+            if(err != ERR_SUCCESS) {
+                printf("Failed to initialize controller, %d", err);
+            } else {
+                // verify the controller is actually connected
+                uint16_t test = controller_read();
+                // if unconnected, we'll get back 0xFFFF (all buttons pressed)
+                if(test & 0xFFFF) {
+                    controller_mode = 0;
+                }
             }
         }
     }

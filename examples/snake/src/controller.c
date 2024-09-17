@@ -26,11 +26,12 @@ __sfr __at(0xd2) IO_PIO_CTRL_A;
 
 uint16_t buttons = 0; // nothing
 
-void controller_flush(void) {
+zos_err_t controller_flush(void) {
     buttons = 0;
+    return ERR_SUCCESS;
 }
 
-void controller_init(void)
+zos_err_t controller_init(void)
 {
     /**
     * Initialize the user port (port A) of the PIO
@@ -52,6 +53,8 @@ void controller_init(void)
      * Set other pins to 0, not very important
      */
     IO_PIO_DATA_A = 1 << IO_CLOCK;
+
+    return ERR_SUCCESS;
 }
 
 /**
