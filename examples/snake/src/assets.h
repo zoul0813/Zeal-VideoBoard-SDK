@@ -22,40 +22,20 @@
  * @brief Workaround to include a binary file in the program
  */
 
-void _snake_palette(void) {
+void __assets__(void) {
     __asm__(
     "__snake_palette_start:\n"
     "    .incbin \"assets/snake_tileset.ztp\"\n"
     "__snake_palette_end:\n"
-    );
-}
-
-void _snake_tileset(void) {
-    __asm__(
     "__snake_tileset_start:\n"
     "    .incbin \"assets/snake_tileset.zts\"\n"
     "__snake_tileset_end:\n"
-    );
-}
-
-void _letters_palette(void) {
-    __asm__(
     "__letters_palette_start:\n"
     "    .incbin \"assets/letters.ztp\"\n"
     "__letters_palette_end:\n"
-    );
-}
-
-void _letters_tileset(void) {
-    __asm__(
 "__letters_tileset_start:\n"
 "    .incbin \"assets/letters.zts\"\n"
 "__letters_tileset_end:\n"
-    );
-}
-
-void _numbers_tileset(void) {
-    __asm__(
     "__numbers_tileset_start:\n"
     "    .incbin \"assets/numbers.zts\"\n"
     "__numbers_tileset_end:\n"
