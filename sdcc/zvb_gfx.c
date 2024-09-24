@@ -15,6 +15,7 @@
 
 #define MAX_LINE    39
 #define MAX_COL     79
+#define TILE_SIZE   256
 
 #define MIN(a,b)  ((a) < (b) ? (a) : (b))
 
@@ -176,6 +177,48 @@ static gfx_error gfx_tileset_load_nibble(gfx_context* ctx, uint8_t* tileset, uin
     return GFX_SUCCESS;
 }
 
+static gfx_error gfx_tileset_load_rle(gfx_context* ctx, uint8_t* data, uint16_t size, uint16_t from, uint8_t pal_offset, uint8_t opacity) {
+    uint8_t buffer[TILE_SIZE + 16] = { 0x00 };
+    uint8_t length = 0;
+    uint16_t i = 0; // data index
+    uint16_t j = 0; // buffer index
+    uint16_t length_of_data = size - 1;
+
+    uint16_t tile_count = 0;
+
+    while (i < length_of_data) {
+        length = data[i]; // RLE byte
+        i++; // every other byte
+        if(length >= 0x80) {
+            length = (length - 0x80) + 1;
+            uint8_t value = data[i];
+            while(length--) {
+                buffer[j++] = value;
+            }
+            i++;
+        } else {
+            length++;
+            memcpy(&buffer[j], &data[i], length);
+            i += length;
+            j += length;
+        }
+
+        if(j >= TILE_SIZE) {
+            gfx_tileset_options options = {
+                .compression = TILESET_COMP_NONE, // load uncompressed data
+                .from_byte = from + (tile_count * TILE_SIZE), // offset by the current tile index?
+                .pal_offset = pal_offset, // copy over
+                .opacity = opacity, // copy over
+            };
+            gfx_tileset_load(ctx, &buffer, TILE_SIZE,  &options);
+            tile_count++;
+            j = 0;
+        }
+    }
+
+    return GFX_SUCCESS;
+}
+
 void memaddcpy(uint8_t* dst, uint8_t* src, size_t size, uint8_t offset)
 {
     if (offset) {
@@ -204,11 +247,15 @@ gfx_error gfx_tileset_load(gfx_context* ctx, void* tileset, uint16_t size, const
     uint8_t* vram_tileset = (uint8_t*) VRAM_VIRT_ADDR;
 
     if (ctx->bpp == 8 && compression != TILESET_COMP_NONE) {
-        if (compression == TILESET_COMP_1BIT)
+        switch(compression) {
+        case TILESET_COMP_1BIT:
             return gfx_tileset_load_bitmap(ctx, tileset, size, from, pal_offset);
-        if (options->compression == TILESET_COMP_4BIT)
+        case TILESET_COMP_4BIT:
             return gfx_tileset_load_nibble(ctx, tileset, size, from, pal_offset, opacity);
-
+        case TILESET_COMP_RLE:
+            // printf("calling gfx_tileset_load_rle: %04x\n", size);
+            return gfx_tileset_load_rle(ctx, tileset, size, from, pal_offset, opacity);
+        }
     } else {
         /* Calculate the number of 16KB pages we will write to VRAM */
         uint8_t  page = from / (16*1024);
