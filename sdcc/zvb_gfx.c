@@ -13,9 +13,11 @@
  */
 #define VRAM_VIRT_ADDR  (0x0000)
 
-#define MAX_LINE    39
-#define MAX_COL     79
-#define TILE_SIZE   256
+#define MAX_LINE        39
+#define MAX_COL         79
+#define TILE_SIZE_8BIT  256
+// #define TILE_SIZE_4BIT  128
+// #define TILE_SIZE_1BIT  32
 
 #define MIN(a,b)  ((a) < (b) ? (a) : (b))
 
@@ -178,7 +180,7 @@ static gfx_error gfx_tileset_load_nibble(gfx_context* ctx, uint8_t* tileset, uin
 }
 
 static gfx_error gfx_tileset_load_rle(gfx_context* ctx, uint8_t* data, uint16_t size, uint16_t from, uint8_t pal_offset, uint8_t opacity) {
-    uint8_t buffer[TILE_SIZE + 16] = { 0x00 };
+    uint8_t buffer[TILE_SIZE_8BIT + 16];
     uint8_t length = 0;
     uint16_t i = 0; // data index
     uint16_t j = 0; // buffer index
@@ -203,14 +205,14 @@ static gfx_error gfx_tileset_load_rle(gfx_context* ctx, uint8_t* data, uint16_t 
             j += length;
         }
 
-        if(j >= TILE_SIZE) {
+        if(j >= TILE_SIZE_8BIT) {
             gfx_tileset_options options = {
                 .compression = TILESET_COMP_NONE, // load uncompressed data
-                .from_byte = from + (tile_count * TILE_SIZE), // offset by the current tile index?
+                .from_byte = from + (tile_count * TILE_SIZE_8BIT), // offset by the current tile index?
                 .pal_offset = pal_offset, // copy over
                 .opacity = opacity, // copy over
             };
-            gfx_tileset_load(ctx, &buffer, TILE_SIZE,  &options);
+            gfx_tileset_load(ctx, &buffer, TILE_SIZE_8BIT,  &options);
             tile_count++;
             j = 0;
         }
