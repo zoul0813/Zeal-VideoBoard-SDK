@@ -26,16 +26,18 @@
 static void init(void);
 static void deinit(void);
 static void reset(void);
+static void game_over(void);
 
-static void wait(void);
 static void draw(void);
 static uint8_t input(void);
 static void input_wait(uint16_t waitFor);
+
 static uint8_t update(void);
 static uint8_t check_collision(void);
-static void place_fruit(Point* point);
-static void game_over(void);
 static uint8_t position_in_snake(uint8_t from, uint8_t x, uint8_t y);
+
+static void place_fruit(Point* point);
+
 static void update_stat(void);
 
 Snake snake;
