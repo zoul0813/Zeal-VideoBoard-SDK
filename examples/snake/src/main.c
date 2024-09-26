@@ -4,93 +4,118 @@
  * SPDX-License-Identifier: CC0-1.0
  */
 
-#include <stdio.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <string.h>
 #include <zos_sys.h>
 #include <zos_vfs.h>
 #include <zos_keyboard.h>
+#include <zos_video.h>
 #include <zos_time.h>
 #include <zos_video.h>
 #include <zvb_gfx.h>
+#include "utils.h"
+#include "keyboard.h"
 #include "controller.h"
-#include "snake.h"
+#include "menu.h"
+#include "title.h"
+#include "assets.h"
+#include "game.h"
 
-#define MINIMUM_WAIT  60
-#define MAX_SPEED     20
-#define BOOST_ON      8
-
-static void play(void);
+static uint8_t play(void);
+static uint8_t menu(void);
+static void init(void);
 static void init_game(void);
 static void wait(void);
 static void draw(void);
-static void input(void);
+static uint8_t input(void);
+static void input_wait(uint16_t waitFor);
 static uint8_t update(void);
 static uint8_t check_collision(void);
 static void place_fruit(Point* point);
-static void end_game(void);
+static void game_over(void);
+static void quit_game(void);
 static uint8_t position_in_snake(uint8_t from, uint8_t x, uint8_t y);
-static void nprint_string(const char* str, uint8_t len, uint8_t x, uint8_t y);
 static void update_stat(void);
-void play_title(void);
 
-static Snake snake;
-static Point fruit;
-static int controller_mode;
+Snake snake;
+Point fruit;
 gfx_context vctx;
+uint8_t controller_mode;
+uint8_t boost_on = 8;
 
-/**
- * @brief Palette for the graphics tiles including the snake, the apple and the background
- */
-const uint8_t assets_palette[] = {
-  0x1f, 0xdc, 0x00, 0x00, 0xc0, 0x08, 0xa1, 0x8a, 0x62, 0x53, 0x40, 0xda,
-  0x9b, 0x4b, 0xdf, 0x5b, 0xff, 0x5b, 0xc3, 0x05, 0x7f, 0x6c, 0xdc, 0x7c,
-  0x83, 0x66, 0x85, 0x5e, 0xbf, 0x9d, 0xbe, 0xf7,
-  /* Background colors */
-  0xa8, 0xae, 0x27, 0x9e, 0x44, 0x6c
-};
-
-/**
- * @brief Palette for the text, including numbers and letters
- */
-const uint8_t letters_palette[] = {
-  0x00, 0x00, 0x83, 0xa8, 0xcb, 0xf1, 0xc7, 0xfc, 0x52, 0xff, 0xff, 0xff
+/* Background colors */
+const uint8_t background_palette[] = {
+  0xA8, 0xAE, 0x27, 0x9E, 0x44, 0x6C
 };
 
 int main(int argc, char** argv) {
-    if (argc == 1){
+    zos_err_t err = keyboard_init();
+    if(err != ERR_SUCCESS) {
+        printf("Failed to initialize keyboard, %d", err);
+        exit(1);
+    }
+
+    if (argc == 1) {
         char* param = strtok(argv[0], " ");
         if (param && (strcmp(param, "-c") == 0)) {
             controller_mode = 1;
-            controller_init();
+            err = controller_init();
+            if(err != ERR_SUCCESS) {
+                printf("Failed to initialize controller, %d", err);
+            } else {
+                // verify the controller is actually connected
+                uint16_t test = controller_read();
+                // if unconnected, we'll get back 0xFFFF (all buttons pressed)
+                if(test & 0xFFFF) {
+                    controller_mode = 0;
+                }
+            }
         }
     }
-    play();
+    init();
+    menu();
+    return play();
+}
+
+static uint8_t menu(void) {
+    static uint8_t frames = 0;
+    title_play();
+    draw_menu();
+    while(1) {
+        gfx_wait_vblank(&vctx);
+        ++frames;
+        if(frames >= 180) {
+            frames = 0;
+            title_flip_head();
+        }
+
+        uint8_t state = process_menu();
+        if(state > 0) {
+            draw_menu();
+        }
+        if(state == 255) {
+            uint8_t mode = get_menu_selection();
+            if(mode == MENU_QUIT) quit_game();
+            break;
+        }
+    }
+    title_hide();
     return 0;
 }
 
-static void play(void) {
-    static uint8_t showed = 0;
+static uint8_t play(void) {
     init_game();
-
-    /* Small workaround to get the title to play only once, this should be properly
-     * done by moving this to the caller, but it would require loading the tiles first,
-     * which is done in `init_game` currently...  */
-    if (!showed) {
-        play_title();
-        showed = 1;
-    }
-
     update_stat();
 
-    uint8_t state = 0;
     // initialize frame counter for FPS
     uint8_t frames = 0;
     while (1) {
-        input();
-        /* Wait for v-blank */
         gfx_wait_vblank(&vctx);
-        frames++;
+        switch(input()) {
+            case 255: quit_game(); break;
+        }
+        ++frames;
         if(frames >= MINIMUM_WAIT - snake.speed) {
             if(update() || check_collision())
                 break;
@@ -99,32 +124,21 @@ static void play(void) {
         }
         gfx_wait_end_vblank(&vctx);
     }
-    end_game();
+    game_over();
 
-    uint8_t key[8];
-    uint16_t size = 8;
-    /* Flush the keyboard fifo */
-    while (size) {
-        read(DEV_STDIN, key, &size);
-    }
+    input_wait(SNES_START | SNES_SELECT | SNES_B);
 
-    /* Wait for a key from the user now */
-    do {
-        size = 1;
-        read(DEV_STDIN, &key, &size);
-    } while (size != 1);
-
-    // ioctl(DEV_STDOUT, CMD_RESET_SCREEN, NULL);
-    play();
+    return play();
 }
 
-static void end_game(void) {
-    /* Change the colors of the snake to greyscale */
-    const uint8_t palette_from = 6;
-    const uint16_t colors[] = { 0xae, 0x73, 0xef, 0x7b, 0x10, 0x84 };
+static void quit_game(void) {
+    title_hide();
+    ioctl(DEV_STDOUT, CMD_RESET_SCREEN, NULL);
+    // TODO: clear screen and sprites!
+    exit(0);
+}
 
-    gfx_palette_load(&vctx, colors, 3, palette_from);
-
+static void game_over(void) {
     for (int i = 0; i < HEIGHT; i++) {
         for (int j = 0; j < WIDTH; j++) {
             gfx_tilemap_place(&vctx, TILE_APPLE, 1, j, i);
@@ -132,14 +146,6 @@ static void end_game(void) {
         }
     }
 }
-
-static void nprint_string(const char* str, uint8_t len, uint8_t x, uint8_t y)
-{
-    gfx_tilemap_load(&vctx, str, len, 1, x, y);
-}
-
-#define BACKGROUND_INDEX    16
-#define BACKGROUND_TILE     32
 
 static void draw_background(void) {
     uint8_t line[WIDTH + 1];
@@ -167,15 +173,13 @@ static void draw_background(void) {
 
 static void update_stat(void) {
     char text[10];
+    sprintf(text,"%02d/%02d", snake.speed, snake.apples_to_boost);
+    nprint_string(text, strlen(text), 1, HEIGHT);
     sprintf(text,"SCORE:%03d", snake.score);
     nprint_string(text, strlen(text), 10, HEIGHT);
 }
 
-static void init_game(void) {
-    /* Initialize the keyboard by setting it to raw and non-blocking */
-    void* arg = (void*) (KB_READ_NON_BLOCK | KB_MODE_RAW);
-    ioctl(DEV_STDIN, KB_CMD_SET_MODE, arg);
-
+static void init(void) {
     /* Disable the screen to prevent artifacts from showing */
     gfx_enable_screen(0);
 
@@ -183,10 +187,22 @@ static void init_game(void) {
     if (err) exit(1);
 
     /* The first color is transparent in our palette, still valid */
-    err = gfx_palette_load(&vctx, assets_palette, sizeof(assets_palette), 0);
+    extern uint8_t _snake_palette_start;
+    extern uint8_t _snake_palette_end;
+    const size_t snake_palette_size = &_snake_palette_end - &_snake_palette_start;
+    err = gfx_palette_load(&vctx, &_snake_palette_start, snake_palette_size, 0);
     if (err) exit(1);
-    err = gfx_palette_load(&vctx, letters_palette, sizeof(letters_palette), 32);
+
+    err = gfx_palette_load(&vctx, background_palette, sizeof(background_palette), BACKGROUND_INDEX);
     if (err) exit(1);
+
+    extern uint8_t _letters_palette_start;
+    extern uint8_t _letters_palette_end;
+    const size_t letters_palette_size = &_letters_palette_end - &_letters_palette_start;
+    err = gfx_palette_load(&vctx, &_letters_palette_start, letters_palette_size, 32);
+    if (err) exit(1);
+
+
 
     /* Load the tilesets */
     extern uint8_t _snake_tileset_end;
@@ -224,6 +240,16 @@ static void init_game(void) {
     /* Fill the layer0 with the background pattern */
     draw_background();
 
+    gfx_enable_screen(1);
+}
+
+static void init_game(void) {
+    /* Disable the screen to prevent artifacts from showing */
+    gfx_enable_screen(0);
+
+    uint8_t mode = get_menu_selection();
+    boost_on = 8 - (mode * 2);
+
     // Initialize snake
     snake.length = 2;
     snake.body[0].x = WIDTH / 2;
@@ -231,11 +257,11 @@ static void init_game(void) {
     snake.body[1].x = WIDTH / 2 - 1;
     snake.body[1].y = HEIGHT / 2;
     snake.direction = DIRECTION_RIGHT;
-    snake.former_direction = DIRECTION_RIGHT;
-    snake.speed = 0;
+    snake.speed = 5 * mode;
     snake.score = 0;
-    snake.apples_to_boost = BOOST_ON;
+    snake.apples_to_boost = boost_on;
 
+    draw_background();
     place_fruit(&fruit);
 
     gfx_enable_screen(1);
@@ -319,66 +345,43 @@ static void draw(void) {
     gfx_tilemap_place(&vctx, TILE_APPLE, 1, fruit.x, fruit.y);
 }
 
-static int8_t check_key(uint8_t key) {
-    switch (key) {
-        case KB_UP_ARROW:
-            if (snake.direction != DIRECTION_DOWN)
-                return DIRECTION_UP;
-            break;
-        case KB_DOWN_ARROW:
-            if (snake.direction != DIRECTION_UP)
-                return  DIRECTION_DOWN;
-            break;
-        case KB_LEFT_ARROW:
-            if (snake.direction != DIRECTION_RIGHT)
-                return DIRECTION_LEFT;
-            break;
-        case KB_RIGHT_ARROW:
-            if (snake.direction != DIRECTION_LEFT)
-                return DIRECTION_RIGHT;
-            break;
+static uint8_t input(void) {
+    uint16_t input = keyboard_read();
+    if(controller_mode == 1) {
+        input |= controller_read();
     }
 
-    return -1;
+    int8_t direction = -1;
+    if(snake.direction != DIRECTION_DOWN && input & SNES_UP) direction = DIRECTION_UP;
+    if(snake.direction != DIRECTION_UP && input & SNES_DOWN) direction = DIRECTION_DOWN;
+    if(snake.direction != DIRECTION_RIGHT && input & SNES_LEFT) direction = DIRECTION_LEFT;
+    if(snake.direction != DIRECTION_LEFT && input & SNES_RIGHT) direction = DIRECTION_RIGHT;
+    if(input & SNES_START) return 255; // Esc/Quit
+
+    if (direction >= 0) {
+        snake.direction = direction;
+    }
+
+
+    return 0;
 }
 
-static uint8_t keys[32];
-
-static void input(void) {
-    uint16_t size = 32;
-    const int8_t last_direction = snake.former_direction;
-    int8_t chosen = -1;
-    uint8_t exit = 0;
-
-    while (!exit) {
-        /* Give priority to the keyboard, if no key is detected, check the external controller */
-        read(DEV_STDIN, keys, &size);
-        /* Since we are in non-blocking mode, `read` syscall can return 0 */
-        if (size == 0 && controller_mode) {
-            size = read_controller(keys);
-            exit = 1;
+static void input_wait(uint16_t waitFor) {
+    while(1) {
+        uint16_t input = keyboard_read();
+        if(controller_mode == 1) {
+            input |= controller_read();
         }
-
-        if (size == 0)
-            break;
-
-        for (uint8_t i = 0; i < size; i++) {
-            if (keys[i] == KB_RELEASED) {
-                i++;
-            } else {
-                int8_t direction = check_key(keys[i]);
-                /* Prioritize direction change */
-                if (direction != -1 && direction != last_direction) {
-                    chosen = direction;
-                    break;
-                }
-            }
-        }
+        if(waitFor == 0 && input > 0) break;
+        if(input & waitFor) break;
     }
 
-    if (chosen != -1) {
-        snake.direction = chosen;
-        snake.former_direction = chosen;
+    while(1) {
+        uint16_t input = keyboard_read();
+        if(controller_mode == 1) {
+            input |= controller_read();
+        }
+        if(input == 0) break;
     }
 }
 
@@ -392,7 +395,7 @@ static uint8_t update(void) {
         snake.length++;
         snake.score++;
         if (snake.apples_to_boost == 0) {
-            snake.apples_to_boost = BOOST_ON;
+            snake.apples_to_boost = boost_on;
             if(snake.speed < MAX_SPEED) {
                 snake.speed++;
             }
@@ -452,58 +455,7 @@ static uint8_t position_in_snake(uint8_t from, uint8_t x, uint8_t y) {
     return 0;
 }
 
-
-/**
- * @brief Place the fruit randomly
- */
-static void place_fruit(Point* point) __naked
-{
-    (void) point;
-__asm
-    ; Max 19 for the X coordinate
-    ld a, r
-    and #0x1f    ; A % 32
-    cp #20
-    jr c, _x_ok
-    sub #20
-_x_ok:
-    ld (hl), a
-    inc hl
-
-    ld a, r
-    and #0x0f    ; A % 16
-    ; A must be between 0 and 13 (last line reserved)
-    cp #14
-    jr c, _y_ok
-    sub #14
-_y_ok:
-    ld (hl), a
-__endasm;
-}
-
-/**
- * @brief Workaround to include a binary file in the program
- */
-void _snake_tileset() {
-    __asm
-__snake_tileset_start:
-    .incbin "assets/snake_tileset.zts"
-__snake_tileset_end:
-    __endasm;
-}
-
-void _letters_tileset() {
-    __asm
-__letters_tileset_start:
-    .incbin "assets/letters.zts"
-__letters_tileset_end:
-    __endasm;
-}
-
-void _numbers_tileset() {
-    __asm
-__numbers_tileset_start:
-    .incbin "assets/numbers.zts"
-__numbers_tileset_end:
-    __endasm;
+static void place_fruit(Point* point) {
+    point->x = rand8() % WIDTH;
+    point->y = rand8() % HEIGHT;
 }

@@ -6,8 +6,26 @@
 
 SHELL := /bin/bash
 
+ifeq '$(findstring ;,$(PATH))' ';'
+    detected_OS := Windows
+else
+    detected_OS := $(shell uname 2>/dev/null || echo Unknown)
+    detected_OS := $(patsubst CYGWIN%,Cygwin,$(detected_OS))
+    detected_OS := $(patsubst MSYS%,MSYS,$(detected_OS))
+    detected_OS := $(patsubst MINGW%,MSYS,$(detected_OS))
+endif
+
+STAT_BYTES = stat
+ifeq ($(detected_OS),Darwin)
+	STAT_BYTES += -f %z
+# TODO: Support Windows?
+else
+	STAT_BYTES += -c %s
+endif
+
+
 # Specify the files to compile and the name of the final binary
-SRCS=snake.c controller.c title.c
+SRCS=main.c controller.c keyboard.c utils.c menu.c title.c
 BIN=snake.bin
 
 # Directory where source files are and where the binaries will be put
@@ -53,6 +71,8 @@ SRCS_ASM_REL=$(patsubst %.asm,%.rel,$(SRCS_OUT_DIR))
 
 all: clean $(OUTPUT_DIR) $(OUTPUT_DIR)/$(BIN_HEX) $(OUTPUT_DIR)/$(BIN)
 	@bash -c 'echo -e "\x1b[32;1mSuccess, binary generated: $(OUTPUT_DIR)/$(BIN)\x1b[0m"'
+	@echo "uartrcv $$($(STAT_BYTES) $(OUTPUT_DIR)/$(BIN)) $(BIN)"
+
 
 $(OUTPUT_DIR):
 	mkdir -p $(OUTPUT_DIR)
