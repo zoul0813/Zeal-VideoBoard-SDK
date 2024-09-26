@@ -12,6 +12,5 @@
 #define MENU_MODE_HARD 2
 #define MENU_QUIT 3
 
+uint8_t menu(void);
 uint8_t get_menu_selection(void);
-uint8_t process_menu(void);
-void draw_menu(void);

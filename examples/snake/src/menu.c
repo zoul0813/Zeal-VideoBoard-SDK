@@ -8,15 +8,60 @@
 #include "game.h"
 #include "title.h"
 
+#define MENU_START_Y  5
+
+static uint8_t process_menu(void);
+static void draw_menu(void);
+
 extern gfx_context vctx;
 uint8_t menu_current_selection = 0;
+uint16_t last_input = 0;
+
+uint8_t menu(void) {
+    static uint8_t frames = 0;
+    title_play();
+    draw_menu();
+    while(1) {
+        gfx_wait_vblank(&vctx);
+        ++frames;
+        if(frames >= 180) {
+            frames = 0;
+            title_flip_head();
+        }
+
+        uint8_t state = process_menu();
+        if(state > 0) {
+            draw_menu();
+        }
+        if(state == 255) {
+            break;
+        }
+    }
+    title_hide();
+
+    msleep(100);
+    while(1) {
+      uint16_t input = keyboard_read();
+      if (controller_mode) {
+        // OR the two inputs to make a single input
+        input |= controller_read();
+      }
+      if(input == 0) break;
+    } // wait for release
+
+    keyboard_flush();
+    controller_flush();
+
+    return menu_current_selection;
+}
+
 
 uint8_t get_menu_selection(void) {
   return menu_current_selection;
 }
 
-uint16_t last_input = 0;
-uint8_t process_menu(void)
+
+static uint8_t process_menu(void)
 {
   uint16_t input = keyboard_read();
   if (controller_mode) {
@@ -52,8 +97,8 @@ uint8_t process_menu(void)
   return 0;
 }
 
-#define MENU_START_Y  5
-void draw_menu(void)
+
+static void draw_menu(void)
 {
   // char text[7];
 

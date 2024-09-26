@@ -22,10 +22,11 @@
 #include "assets.h"
 #include "game.h"
 
-static uint8_t play(void);
-static uint8_t menu(void);
+// static uint8_t play(void);
 static void init(void);
-static void init_game(void);
+static void deinit(void);
+static void reset(void);
+
 static void wait(void);
 static void draw(void);
 static uint8_t input(void);
@@ -34,7 +35,6 @@ static uint8_t update(void);
 static uint8_t check_collision(void);
 static void place_fruit(Point* point);
 static void game_over(void);
-static void quit_game(void);
 static uint8_t position_in_snake(uint8_t from, uint8_t x, uint8_t y);
 static void update_stat(void);
 
@@ -43,6 +43,7 @@ Point fruit;
 gfx_context vctx;
 uint8_t controller_mode = 1;
 uint8_t boost_on = 8;
+uint16_t frames = 0;
 
 /* Background colors */
 const uint8_t background_palette[] = {
@@ -50,69 +51,35 @@ const uint8_t background_palette[] = {
 };
 
 int main(void) {
-    init();
-    menu();
-    return play();
-}
+    init(); // Initialize everything
 
-static uint8_t menu(void) {
-    static uint8_t frames = 0;
-    title_play();
-    draw_menu();
-    while(1) {
+    menu(); // Show the menu
+
+    reset(); // Reset for game
+
+    // Game Loop
+    while(input() == 0) {
         gfx_wait_vblank(&vctx);
         ++frames;
-        if(frames >= 180) {
-            frames = 0;
-            title_flip_head();
-        }
-
-        uint8_t state = process_menu();
-        if(state > 0) {
-            draw_menu();
-        }
-        if(state == 255) {
-            uint8_t mode = get_menu_selection();
-            if(mode == MENU_QUIT) quit_game();
-            break;
-        }
-    }
-    title_hide();
-    return 0;
-}
-
-static uint8_t play(void) {
-    init_game();
-    update_stat();
-
-    // initialize frame counter for FPS
-    uint8_t frames = 0;
-    while (1) {
-        gfx_wait_vblank(&vctx);
-        switch(input()) {
-            case 255: quit_game(); break;
-        }
-        ++frames;
-        if(frames >= MINIMUM_WAIT - snake.speed) {
-            if(update() || check_collision())
-                break;
-            frames = 0;
+        if(frames == MINIMUM_WAIT - snake.speed) {
+            if(update() || check_collision()) {
+                game_over();
+                input_wait(SNES_START | SNES_SELECT | SNES_B);
+                reset();
+            }
             draw();
+            frames = 0;
         }
+
         gfx_wait_end_vblank(&vctx);
     }
-    game_over();
 
-    input_wait(SNES_START | SNES_SELECT | SNES_B);
+    deinit(); // deinitialize graphics, etc
 
-    return play();
-}
+    printf("Game complete\n");
+    printf("Score: %d\n\n", snake.score);
 
-static void quit_game(void) {
-    title_hide();
-    ioctl(DEV_STDOUT, CMD_RESET_SCREEN, NULL);
-    // TODO: clear screen and sprites!
-    exit(0);
+    return 0;
 }
 
 static void game_over(void) {
@@ -237,7 +204,12 @@ static void init(void) {
     gfx_enable_screen(1);
 }
 
-static void init_game(void) {
+static void deinit(void) {
+    title_hide();
+    ioctl(DEV_STDOUT, CMD_RESET_SCREEN, NULL);
+}
+
+static void reset(void) {
     /* Disable the screen to prevent artifacts from showing */
     gfx_enable_screen(0);
 
@@ -257,6 +229,8 @@ static void init_game(void) {
 
     draw_background();
     place_fruit(&fruit);
+
+    update_stat();
 
     gfx_enable_screen(1);
 }
