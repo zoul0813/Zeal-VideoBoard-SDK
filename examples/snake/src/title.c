@@ -11,7 +11,7 @@
 /**
  * The smaller the faster, must be > 0
  */
-#define TITLE_BOUNCE_DELAY  1
+#define BOUNCE_VELOCITY  12
 
 /**
  * Bottom limit for the title
@@ -35,30 +35,28 @@ static void bounce_letter(uint8_t idx, uint8_t letter, uint16_t x)
     gfx_wait_end_vblank(&vctx);
 
     uint16_t y = 0;
-    static int16_t velocity = 0;
+    static int16_t velocity;
     uint8_t delay = 0;
+    velocity = 0;
 
     while (1) {
         gfx_wait_vblank(&vctx);
 
-        delay++;
-        if (delay == TITLE_BOUNCE_DELAY) {
-            delay = 0;
-            velocity++;
-            y += velocity;
+        velocity+= BOUNCE_VELOCITY;
+        y += velocity;
 
-            const uint16_t whole = y >> 8;
-            if (whole > TITLE_Y) {
-                y = (TITLE_Y << 8);
-                if (velocity < 48) {
-                    gfx_wait_end_vblank(&vctx);
-                    return;
-                }
-                velocity = -velocity / 2;
+        uint16_t whole = y >> 8;
+        if(whole > TITLE_Y) {
+            y = (TITLE_Y << 8);
+            if (velocity <= 10 * BOUNCE_VELOCITY) {
+                gfx_wait_end_vblank(&vctx);
+                return;
             }
-
-            gfx_sprite_set_y(&vctx, idx, whole);
+            velocity = -velocity / 2;
+            whole = TITLE_Y;
         }
+
+        gfx_sprite_set_y(&vctx, idx, whole);
         gfx_wait_end_vblank(&vctx);
     }
 }
@@ -78,7 +76,7 @@ void title_play(void) {
     const uint8_t x = 7;
 
     for (uint8_t i = 0; i < _title_size; i++) {
-        // bounce_letter(i, title[i], (x + i + 1) << 4);
+        bounce_letter(i, title[i], (x + i + 1) << 4);
         gfx_sprite_set_y(&vctx, i, TITLE_Y);
     }
 }
