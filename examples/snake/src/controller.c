@@ -5,6 +5,7 @@
  */
 
 #include <stdio.h>
+#include <zos_errors.h>
 #include <zos_keyboard.h>
 #include "controller.h"
 
@@ -23,8 +24,6 @@ __sfr __at(0xd2) IO_PIO_CTRL_A;
 #define IO_DATA     0
 #define IO_LATCH    2
 #define IO_CLOCK    3
-
-uint16_t buttons = 0; // nothing
 
 zos_err_t controller_flush(void) {
     buttons = 0;
@@ -81,8 +80,4 @@ uint16_t controller_read(void)
     buttons >>= 4;
 
     return buttons;
-}
-
-uint8_t controller_pressed(uint16_t button) {
-    return buttons & button;
 }

@@ -41,7 +41,7 @@ static void update_stat(void);
 Snake snake;
 Point fruit;
 gfx_context vctx;
-uint8_t controller_mode;
+uint8_t controller_mode = 1;
 uint8_t boost_on = 8;
 
 /* Background colors */
@@ -49,30 +49,7 @@ const uint8_t background_palette[] = {
   0xA8, 0xAE, 0x27, 0x9E, 0x44, 0x6C
 };
 
-int main(int argc, char** argv) {
-    zos_err_t err = keyboard_init();
-    if(err != ERR_SUCCESS) {
-        printf("Failed to initialize keyboard, %d", err);
-        exit(1);
-    }
-
-    if (argc == 1) {
-        char* param = strtok(argv[0], " ");
-        if (param && (strcmp(param, "-c") == 0)) {
-            controller_mode = 1;
-            err = controller_init();
-            if(err != ERR_SUCCESS) {
-                printf("Failed to initialize controller, %d", err);
-            } else {
-                // verify the controller is actually connected
-                uint16_t test = controller_read();
-                // if unconnected, we'll get back 0xFFFF (all buttons pressed)
-                if(test & 0xFFFF) {
-                    controller_mode = 0;
-                }
-            }
-        }
-    }
+int main(void) {
     init();
     menu();
     return play();
@@ -180,10 +157,27 @@ static void update_stat(void) {
 }
 
 static void init(void) {
+    zos_err_t err = keyboard_init();
+    if(err != ERR_SUCCESS) {
+        printf("Failed to initialize keyboard, %d", err);
+        exit(1);
+    }
+
+    err = controller_init();
+    if(err != ERR_SUCCESS) {
+        printf("Failed to initialize controller, %d", err);
+    }
+    // verify the controller is actually connected
+    uint16_t test = controller_read();
+    // if unconnected, we'll get back 0xFFFF (all buttons pressed)
+    if(test & 0xFFFF) {
+        controller_mode = 0;
+    }
+
     /* Disable the screen to prevent artifacts from showing */
     gfx_enable_screen(0);
 
-    gfx_error err = gfx_initialize(ZVB_CTRL_VID_MODE_GFX_320_8BIT, &vctx);
+    err = gfx_initialize(ZVB_CTRL_VID_MODE_GFX_320_8BIT, &vctx);
     if (err) exit(1);
 
     /* The first color is transparent in our palette, still valid */

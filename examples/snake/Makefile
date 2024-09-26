@@ -23,14 +23,13 @@ else
 	STAT_BYTES += -c %s
 endif
 
-
-# Specify the files to compile and the name of the final binary
-SRCS=main.c controller.c keyboard.c utils.c menu.c title.c
-BIN=snake.bin
-
 # Directory where source files are and where the binaries will be put
 INPUT_DIR=src
 OUTPUT_DIR=bin
+
+# Specify the files to compile and the name of the final binary
+SRCS=$(wildcard $(INPUT_DIR)/*.c)
+BIN=snake.bin
 
 # Include directory containing Zeal 8-bit OS header files.
 ifndef ZOS_PATH
@@ -62,9 +61,8 @@ OBJCOPY=objcopy
 # Generate the intermediate Intel Hex binary name
 BIN_HEX=$(patsubst %.bin,%.ihx,$(BIN))
 # Generate the rel names for C source files. Only keep the file names, and add output dir prefix.
-SRCS_OUT_DIR=$(addprefix $(OUTPUT_DIR)/,$(SRCS))
-SRCS_REL=$(patsubst %.c,%.rel,$(SRCS_OUT_DIR))
-SRCS_ASM_REL=$(patsubst %.asm,%.rel,$(SRCS_OUT_DIR))
+SRCS_REL=$(subst $(INPUT_DIR)/,$(OUTPUT_DIR)/,$(patsubst %.c,%.rel,$(SRCS)))
+SRCS_ASM_REL=$(subst $(INPUT_DIR)/,$(OUTPUT_DIR)/,$(patsubst %.asm,%.rel,$(SRCS)))
 
 
 .PHONY: all clean
