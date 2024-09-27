@@ -172,7 +172,7 @@ static void init(void) {
     extern uint8_t _snake_tileset_start;
     const size_t tileset_size = &_snake_tileset_end - &_snake_tileset_start;
     gfx_tileset_options options = {
-        .compression = TILESET_COMP_NONE,
+        .compression = TILESET_COMP_RLE,
     };
     err = gfx_tileset_load(&vctx, &_snake_tileset_start, tileset_size, &options);
     if (err) exit(1);
@@ -180,7 +180,7 @@ static void init(void) {
     extern uint8_t _letters_tileset_end;
     extern uint8_t _letters_tileset_start;
     const size_t letter_tileset_size = &_letters_tileset_end - &_letters_tileset_start;
-    options.compression = TILESET_COMP_4BIT;
+    options.compression = TILESET_COMP_4BIT; // TODO: | TILESET_COMP_RLE
     options.from_byte = 0x4100; // 'A' << 256
     options.pal_offset = 32;
     options.opacity = 1;
