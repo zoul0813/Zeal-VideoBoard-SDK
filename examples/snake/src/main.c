@@ -44,7 +44,7 @@ Snake snake;
 Point fruit;
 gfx_context vctx;
 uint8_t controller_mode = 1;
-uint8_t boost_on = 8;
+uint8_t boost_on = BOOST_ON;
 uint16_t frames = 0;
 
 /* Background colors */

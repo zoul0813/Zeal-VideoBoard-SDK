@@ -11,7 +11,7 @@
 /**
  * The smaller the faster, must be > 0
  */
-#define BOUNCE_VELOCITY  12
+#define BOUNCE_VELOCITY  36
 
 /**
  * Bottom limit for the title

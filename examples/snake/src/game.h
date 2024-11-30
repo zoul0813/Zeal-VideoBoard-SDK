@@ -9,8 +9,9 @@
 #include <stdint.h>
 #include <zvb_gfx.h>
 
-#define MINIMUM_WAIT  48
-#define MAX_SPEED     32
+#define MINIMUM_WAIT    20
+#define MAX_SPEED       10
+#define BOOST_ON        8
 
 #define WIDTH 20
 /* Keep one line at the bottom for the score */
