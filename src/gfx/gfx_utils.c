@@ -7,6 +7,31 @@
 #include "zvb_gfx.h"
 #include "gfx.h"
 
+/**
+ * @brief Map the VRAM to the first page (page0)
+ */
+void gfx_map_vram(void)
+{
+    __asm__ ("di");
+    mmu_page0 = VID_MEM_PHYS_ADDR_START >> 14;
+}
+
+/**
+ * @brief Similarly but for the tileset (16KB at once, max 4 parts)
+ */
+void gfx_map_tileset(uint8_t part)
+{
+    __asm__ ("di");
+    mmu_page0 = (VID_MEM_TILESET_ADDR >> 14) + part;
+}
+
+
+void gfx_demap_vram(const uint8_t os)
+{
+    mmu_page0 = os;
+    __asm__ ("ei");
+}
+
 void memset_vram(void* ptr, int a, uint16_t size) __naked
 {
     (void) ptr;
