@@ -3,8 +3,6 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-#include <stdio.h>
-#include <string.h>
 #include <stdint.h>
 #include "zvb_gfx.h"
 #include "../gfx.h"
@@ -30,7 +28,7 @@ gfx_error gfx_tileset_load_rle(gfx_context* ctx, uint8_t* data, uint16_t size, u
             i++;
         } else {
             length++;
-            memcpy(&buffer[j], &data[i], length);
+            mem_cpy(&buffer[j], &data[i], length);
             i += length;
             j += length;
         }

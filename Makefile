@@ -24,13 +24,13 @@ CFLAGS=-mz80 -c --codeseg TEXT -I$(ZVB_INCLUDE) --opt-code-speed
 ZVB_CRC_SOURCES := $(wildcard $(SRC_DIR)/crc/*.c)
 ZVB_DMA_SOURCES := $(wildcard $(SRC_DIR)/dma/*.c)
 ZVB_SOUND_SOURCES := $(wildcard $(SRC_DIR)/sound/*.c)
-ZVB_GFX_SOURCES := $(wildcard $(SRC_DIR)/gfx/*.c)
+ZVB_GFX_SOURCES := $(wildcard $(SRC_DIR)/gfx/*.c) $(wildcard $(SRC_DIR)/gfx/tileset/*.c)
 
-# Object files
-ZVB_CRC_OBJS := $(patsubst $(SRC_DIR)/crc/%.c,$(OUTPUT_DIR)/%.rel,$(ZVB_CRC_SOURCES))
-ZVB_DMA_OBJS := $(patsubst $(SRC_DIR)/dma/%.c,$(OUTPUT_DIR)/%.rel,$(ZVB_DMA_SOURCES))
-ZVB_SOUND_OBJS := $(patsubst $(SRC_DIR)/sound/%.c,$(OUTPUT_DIR)/%.rel,$(ZVB_SOUND_SOURCES))
-ZVB_GFX_OBJS := $(patsubst $(SRC_DIR)/gfx/%.c,$(OUTPUT_DIR)/%.rel,$(ZVB_GFX_SOURCES))
+# Object files - note we use notdir to strip directory paths for output files
+ZVB_CRC_OBJS := $(addprefix $(OUTPUT_DIR)/,$(notdir $(ZVB_CRC_SOURCES:.c=.rel)))
+ZVB_DMA_OBJS := $(addprefix $(OUTPUT_DIR)/,$(notdir $(ZVB_DMA_SOURCES:.c=.rel)))
+ZVB_SOUND_OBJS := $(addprefix $(OUTPUT_DIR)/,$(notdir $(ZVB_SOUND_SOURCES:.c=.rel)))
+ZVB_GFX_OBJS := $(addprefix $(OUTPUT_DIR)/,$(notdir $(ZVB_GFX_SOURCES:.c=.rel)))
 
 .PHONY: all clean
 
@@ -51,6 +51,9 @@ $(OUTPUT_DIR)/%.rel: $(SRC_DIR)/sound/%.c
 	$(CC) $(CFLAGS) -o $(OUTPUT_DIR)/ $<
 
 $(OUTPUT_DIR)/%.rel: $(SRC_DIR)/gfx/%.c
+	$(CC) $(CFLAGS) -o $(OUTPUT_DIR)/ $<
+
+$(OUTPUT_DIR)/%.rel: $(SRC_DIR)/gfx/tileset/%.c
 	$(CC) $(CFLAGS) -o $(OUTPUT_DIR)/ $<
 
 # Library rules

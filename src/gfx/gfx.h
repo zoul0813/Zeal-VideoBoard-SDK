@@ -51,3 +51,4 @@ static inline void gfx_demap_vram(const uint8_t os)
 
 void memset_vram(void* ptr, int a, uint16_t size) __naked;
 void memaddcpy(uint8_t* dst, uint8_t* src, size_t size, uint8_t opacity, uint8_t offset);
+void* mem_cpy(void* dst, const void* src, size_t size);

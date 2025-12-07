@@ -3,8 +3,6 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-#include <stdio.h>
-#include <string.h>
 #include <stdint.h>
 #include <stddef.h>
 #include "zvb_gfx.h"

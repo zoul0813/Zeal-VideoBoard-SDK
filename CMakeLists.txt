@@ -12,10 +12,13 @@ include($ENV{ZOS_PATH}/cmake/zos_init.cmake)
 
 project(zvb-sdk-libs C)
 
-# Function to create libraries
+# Function to create object libraries (compile once, use many times)
 function(zvb_add_library name)
-    add_library(${name} STATIC ${ARGN})
-    target_include_directories(${name} PRIVATE ${CMAKE_SOURCE_DIR}/include)
+    add_library(${name}_objects OBJECT ${ARGN})
+    target_include_directories(${name}_objects PRIVATE ${CMAKE_SOURCE_DIR}/include)
+    target_compile_options(${name}_objects PRIVATE --nostdlib)
+    # Create the static library from the object files
+    add_library(${name} STATIC $<TARGET_OBJECTS:${name}_objects>)
 endfunction()
 
 # Function to convert relative paths to absolute and export to parent scope
@@ -36,8 +39,13 @@ add_subdirectory(${SRC_DIR}/dma)
 add_subdirectory(${SRC_DIR}/sound)
 add_subdirectory(${SRC_DIR}/gfx)
 
-# Create combined library with all modules
-zvb_add_library(zvb ${ZVB_GFX_SOURCES} ${ZVB_CRC_SOURCES} ${ZVB_SOUND_SOURCES} ${ZVB_DMA_SOURCES})
+# Create combined library with all modules (reuse object files from other libraries)
+add_library(zvb STATIC
+    $<TARGET_OBJECTS:zvb_gfx_objects>
+    $<TARGET_OBJECTS:zvb_crc_objects>
+    $<TARGET_OBJECTS:zvb_sound_objects>
+    $<TARGET_OBJECTS:zvb_dma_objects>
+)
 
 # Group target to build all
 add_custom_target(all_libs DEPENDS zvb_gfx zvb_crc zvb_sound zvb_dma zvb)

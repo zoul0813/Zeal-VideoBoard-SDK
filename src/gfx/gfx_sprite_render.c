@@ -3,8 +3,6 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-#include <stdio.h>
-#include <string.h>
 #include <stdint.h>
 #include <stddef.h>
 #include "zvb_gfx.h"
@@ -21,7 +19,7 @@ gfx_error gfx_sprite_render(gfx_context* ctx, uint8_t sprite_idx, const gfx_spri
     gfx_sprite* destination = &rw_sprites[sprite_idx];
 
     gfx_map_vram();
-    memcpy(destination, sprite, sizeof(gfx_sprite));
+    mem_cpy(destination, sprite, sizeof(gfx_sprite));
     gfx_demap_vram(ctx->backup_page);
 
     return GFX_SUCCESS;
