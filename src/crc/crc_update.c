@@ -3,25 +3,8 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-#include <stdio.h>
-#include <string.h>
 #include <stdint.h>
 #include "zvb_crc.h"
-
-
-void zvb_crc_initialize(uint8_t reset)
-{
-    zvb_map_peripheral(ZVB_PERI_CRC_IDX);
-    if (reset) {
-        zvb_peri_crc_ctrl = BIT(IO_CRC32_CTRL_RESET_BIT);
-    }
-}
-
-
-void zvb_crc_reset(void)
-{
-    zvb_peri_crc_ctrl = BIT(IO_CRC32_CTRL_RESET_BIT);
-}
 
 
 uint32_t zvb_crc_update(uint8_t *buffer, uint16_t size)  __sdcccall(1)

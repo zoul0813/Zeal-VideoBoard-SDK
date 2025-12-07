@@ -320,13 +320,13 @@ IOB(ZVB_PERI_BASE + 0x2) zvb_peri_sound_sample_conf;   // (R/W)
 
 /**
  * @brief (WO) You can assign a voice to a specific channel (left/right) by setting the
- * channel bit on `zvb_peri_sound_volume_left` or `zvb_peri_sound_volume_right` accordingly.
+ * channel bit on `zvb_peri_sound_left_channel` or `zvb_peri_sound_right_channel` accordingly.
  *
  * Bit 7 is assigned to the sample voice, you can use `sound_voice_t` to combine voices.
  *
  * Example:
- * zvb_peri_sound_volume_left  = VOICE0 | VOICE2; // VOICE0 and VOICE2 are assigned to left channel
- * zvb_peri_sound_volume_right = VOICE1 | VOICE3; // VOICE1 and VOICE3 are assigned to right channel
+ * zvb_peri_sound_left_channel  = VOICE0 | VOICE2; // VOICE0 and VOICE2 are assigned to left channel
+ * zvb_peri_sound_right_channel = VOICE1 | VOICE3; // VOICE1 and VOICE3 are assigned to right channel
  *
  */
 IOB(ZVB_PERI_BASE + 0xb) zvb_peri_sound_left_channel;

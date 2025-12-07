@@ -8,6 +8,12 @@
 
 #include <stdint.h>
 #include "zvb_hardware.h"
+#include "zvb_dma.h"
+
+typedef uint8_t dma_error;
+
+#define DMA_SUCCESS     0
+#define DMA_FAILURE     1
 
 #define DMA_DESC_LAST 1
 
@@ -48,9 +54,9 @@ typedef struct {
 
 
 uint32_t zvb_dma_virt_to_phys(void* ptr) __naked;
-uint8_t zvb_dma_prepare_descriptor(zvb_dma_descriptor_t* desc, zvb_dma_descriptor_config_t* config);
-uint8_t zvb_dma_set_read(zvb_dma_descriptor_t* desc, uint32_t addr);
-uint8_t zvb_dma_set_read_virt(zvb_dma_descriptor_t* desc, void* ptr);
-uint8_t zvb_dma_set_write(zvb_dma_descriptor_t* desc, uint32_t addr);
-uint8_t zvb_dma_set_write_virt(zvb_dma_descriptor_t* desc, void* ptr);
-uint8_t zvb_dma_start_transfer(zvb_dma_descriptor_t *desc);
+dma_error zvb_dma_prepare_descriptor(zvb_dma_descriptor_t* desc, zvb_dma_descriptor_config_t* config);
+dma_error zvb_dma_set_read(zvb_dma_descriptor_t* desc, uint32_t addr);
+dma_error zvb_dma_set_read_virt(zvb_dma_descriptor_t* desc, void* ptr);
+dma_error zvb_dma_set_write(zvb_dma_descriptor_t* desc, uint32_t addr);
+dma_error zvb_dma_set_write_virt(zvb_dma_descriptor_t* desc, void* ptr);
+dma_error zvb_dma_start_transfer(zvb_dma_descriptor_t *desc);

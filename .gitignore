@@ -4,6 +4,7 @@
 # Misc
 *.zip
 bin/
+tmp/
 .vscode/
 
 # Prerequisites
@@ -53,6 +54,7 @@ lib/*.rel
 lib/*.sym
 lib/*.lst
 lib/*.asm
+lib/Makefile
 
 # Kernel Module Compile Results
 *.mod*
